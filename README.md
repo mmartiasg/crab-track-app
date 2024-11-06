@@ -35,6 +35,7 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
    cd crab-tracker
 
 ## Configuration
+```yaml
     model:
       path: # models weights
       conf_threshold: 0.8 # detection threshold
@@ -46,12 +47,20 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
     output:
       save_results: true
       path: results/ # where to save the results this is the stats and the videos
+```
 
 ## Example
     python main.py --config_path=config/run_conf.yaml
 
 # Example Docker
-    docker compose -f docker-compose.yaml up --build
+      docker compose -f docker-compose.yaml up --build
+      or:
+      docker compose -f docker-compose.yaml up --build -d; docker compose logs -f
+
+      to stop it:
+      docker compose stop crab-track
+
+This last one avoids the new line for every frame update.
 
 The important part is the config of the folders
 ```yaml
