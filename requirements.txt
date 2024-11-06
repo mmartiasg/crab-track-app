@@ -1,0 +1,10 @@
+numpy
+matplotlib
+opencv-contrib-python
+opencv-python
+tqdm
+scikit-learn
+ultralytics == 8.2.5
+boto3
+joblib
+pybboxes
