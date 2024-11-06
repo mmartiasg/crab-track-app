@@ -1,0 +1,13 @@
+services:
+  crab-track:
+    build: .
+    image: mmatiasg/crab-track-image:0.1.0
+    container_name: crab-track
+    volumes:
+      - type: bind
+        source: /home/matias/workspace/datasets/sample_dataset_icman
+        target: /dataset/samples
+      - type: bind
+        source: /home/matias/workspace/crab-track-app/results
+        target: /results
+    command: ["python", "main.py", "--config_path=config/run_conf.yaml"]

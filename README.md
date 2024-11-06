@@ -13,6 +13,7 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Example](#example)
+- [Docker](#example-docker)
 - [Results](#results)
 - [Contributing](#contributing)
 - [License](#license)
@@ -47,3 +48,20 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
 
 ## Example
     python main.py --config_path=config/run_conf.yaml
+
+# Example Docker
+    docker compose -f docker-compose.yaml up --build
+
+The important part is the config of the folders
+```yaml
+    volumes:
+      - type: bind
+        source: #folder where the videos are located.
+        target: # folder in the config file this will be in the docker filesystem
+      - type: bind
+        source: #folder where the results will be saved.
+        target: # folder in the config file this will be in the docker filesystem
+```
+
+Target needs to match with the config file path
+
