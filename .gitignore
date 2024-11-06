@@ -38,7 +38,7 @@ MANIFEST
 # generated files
 .csv
 .mp4
-.run_conf.json
+run_conf.yaml
 /results
 
 # Installer logs

@@ -8,17 +8,23 @@ import numpy as np
 import os
 
 
-def track_object(input_video_path, output_video_path, stats_path, video_name, tracker_name, model_weights, device="cpu", confidence=0.8):
+def track_object(input_video_path, output_video_path, stats_path, video_name,
+                 tracker_name, model_weights, device="cpu", confidence_threshold=0.8, nms_threshold=0.4):
     """
     This runs all trackers defined in the trackers_name_list for one video shows every frame in a window
     Saves the results in results, and the resulted video will be saved in this same directory with the name video_name+_bbox_preds.mp4
 
     Parameters
     ----------
-    input_video_path: Path where the video is located
-    video_name: Name of the video that will be used to create the output video and the result files.
-    trackers_name_list: Tracker list that will be used to create the output video and the result files.
-    ground_truth: Ground truth of the video that will be used in the notebook evaluation_single_video.ipynb to evaluate the trackers over the video
+    :param input_video_path: Path where the video is located
+    :param stats_path:
+    :param video_name: Name of the video that will be used to create the output video and the result files.
+    :param tracker_name:
+    :param model_weights:
+    :param device:
+    :param nms_threshold:
+    :param confidence_threshold:
+    :param output_video_path:
     """
 
     video = cv2.VideoCapture(input_video_path)
@@ -70,7 +76,7 @@ def track_object(input_video_path, output_video_path, stats_path, video_name, tr
             break
 
         start_time = time.time()
-        results = model.track(frame, persist=True, conf=confidence, verbose=False, device=device)
+        results = model.track(frame, persist=True, conf=confidence_threshold, iou=nms_threshold, verbose=False, device=device)
         duration = time.time() - start_time
 
         for bbox in results[0].boxes:
