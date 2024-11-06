@@ -6,6 +6,7 @@ from tqdm.auto import tqdm
 from ultralytics import YOLO
 import numpy as np
 import os
+import sys
 
 
 def track_object(input_video_path, output_video_path, stats_path, video_name,
@@ -65,7 +66,7 @@ def track_object(input_video_path, output_video_path, stats_path, video_name,
     bbox_color[tracker_name] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
     # loop through all frames of video file
-    pbar = tqdm(total=frames_count)
+    pbar = tqdm(total=frames_count, ncols=100, file=sys.stderr)
     frame_index = 0
 
     while True:
