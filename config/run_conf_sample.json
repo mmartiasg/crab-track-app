@@ -1,0 +1,8 @@
+{
+  "MODEL_WEIGHTS":,
+  "VIDEO_FOLDER":,
+  "RESULTS_PATH":,
+  "VIDEO_EXTENSION":,
+  "CONFIDENCE":,
+  "DEVICE":
+}

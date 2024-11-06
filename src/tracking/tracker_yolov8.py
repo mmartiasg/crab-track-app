@@ -1,18 +1,14 @@
 import cv2
-import os
 import random
 import time
 import pandas as pd
 from tqdm.auto import tqdm
 from ultralytics import YOLO
 import numpy as np
-
-DATASET_BASE_DIR = '../../../datasets/crab-dataset.v1i.yolov8'
-IMAGE_DIR = os.path.join(DATASET_BASE_DIR, "all_data", 'images')
-LABEL_DIR = os.path.join(DATASET_BASE_DIR, "all_data", 'labels')
+import os
 
 
-def track_object(input_video_path, output_video_path, video_name, tracker_name, model_weights):
+def track_object(input_video_path, output_video_path, stats_path, video_name, tracker_name, model_weights, device="cpu", confidence=0.8):
     """
     This runs all trackers defined in the trackers_name_list for one video shows every frame in a window
     Saves the results in results, and the resulted video will be saved in this same directory with the name video_name+_bbox_preds.mp4
@@ -46,15 +42,19 @@ def track_object(input_video_path, output_video_path, video_name, tracker_name, 
     frames_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
     out = cv2.VideoWriter(
-        output_video_path, cv2.VideoWriter_fourcc(*"mp4v"), original_frame_rate, (width, height)
+        os.path.join(output_video_path, video_name + ".mp4"), cv2.VideoWriter_fourcc(*"mp4v"), original_frame_rate, (width, height)
     )
 
-    # Load model
+    # load video
+    if not out.isOpened():
+        print(f'[ERROR] Writer not initialized check the output path {os.path.join(output_video_path, video_name + ".mp4")}')
+
+    # Instanciate model
     model = YOLO(model_weights, task="detect")
 
     # random generate a colour for bounding box
     random.seed(132)
-    bbox_color = {}
+    bbox_color = dict()
 
     bbox_color[tracker_name] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
@@ -70,7 +70,7 @@ def track_object(input_video_path, output_video_path, video_name, tracker_name, 
             break
 
         start_time = time.time()
-        results = model.track(frame, persist=True, conf=0.7, verbose=False, device="cuda")
+        results = model.track(frame, persist=True, conf=confidence, verbose=False, device=device)
         duration = time.time() - start_time
 
         for bbox in results[0].boxes:
@@ -91,7 +91,6 @@ def track_object(input_video_path, output_video_path, video_name, tracker_name, 
                       "pred_bbox_x2": x2,
                       "pred_bbox_y2": y2
                       }
-
             tracker_stats.append(record)
 
         frame_index += 1
@@ -99,14 +98,11 @@ def track_object(input_video_path, output_video_path, video_name, tracker_name, 
         out.write(frame)
 
     stats_df = pd.DataFrame(tracker_stats)
-
     # interpolate frames based on the previous and next frames when missing.
     stats_df = stats_df[["pred_bbox_x1", "pred_bbox_y1", "pred_bbox_x2", "pred_bbox_y2"]].interpolate()
-
-    stats_df.to_csv(f"../results/stats/stats_{video_name}.csv")
+    stats_df.to_csv(os.path.join(stats_path, f"{video_name}.csv"))
 
     pbar.close()
     video.release()
     out.release()
     del model
-

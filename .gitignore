@@ -35,6 +35,12 @@ MANIFEST
 #idea
 .idea/
 
+# generated files
+.csv
+.mp4
+.run_conf.json
+/results
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
