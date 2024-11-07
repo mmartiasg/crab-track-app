@@ -33,8 +33,8 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/crab-tracker.git
-   cd crab-tracker
+   git clone https://github.com/yourusername/crab-track-app.git
+   cd crab-track-app
 
 ## Setup
 
