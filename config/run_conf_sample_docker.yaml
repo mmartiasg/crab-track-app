@@ -1,0 +1,12 @@
+model:
+  path: models/0.2.0/tracking.onnx
+  conf_threshold: 0.8
+  nms_threshold: 0.5
+  device: cpu
+input:
+  path: /dataset/samples # do not change it
+  extension: mp4
+output:
+  export_videos: false
+  path: /results # do not change it
+  disable_progress_bar: true
