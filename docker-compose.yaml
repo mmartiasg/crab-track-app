@@ -3,7 +3,7 @@ services:
     build: .
     image: crab-track-image:0.1.0
     container_name: crab-track
-    tty:  true
+    tty: true
     volumes:
       - type: bind
         source: /home/matias/workspace/datasets/sample_dataset_icman
