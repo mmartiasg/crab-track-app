@@ -3,11 +3,11 @@ import argparse
 import os
 from src.tracking.tracker import track_object
 from src.utils.constants import Config
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, parallel_backend
 import glob
 import multiprocessing as mpt
 from tqdm.auto import tqdm
-from src.utils.ProgressBarJoblib import tqdm_joblib
+import sys
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
     if config.get_config["input"]["path"] is None:
         raise Exception("No path input path specified")
 
-    output_video_path = ""
+    output_video_path = None
     if config.get_config["output"]["export_videos"]:
         output_video_path = os.path.join(config.get_config["output"]["path"], "videos")
         os.makedirs(output_video_path, exist_ok=True)
@@ -34,8 +34,8 @@ def main():
     video_paths = glob.glob(
         os.path.join(config.get_config["input"]["path"], f"*.{config.get_config['input']['extension']}"))
 
-    with tqdm_joblib(tqdm(desc="Tracking", total=len(video_paths))):
-        Parallel(n_jobs=mpt.cpu_count(), verbose=12)(
+    with parallel_backend("loky"):
+        res = Parallel(n_jobs=mpt.cpu_count(), return_as="generator_unordered")(
             delayed(track_object)(input_video_path=video_path,
                                   output_video_path=output_video_path,
                                   stats_path=os.path.join(config.get_config["output"]["path"], "stats"),
@@ -49,6 +49,14 @@ def main():
                                   disable_progress_bar=config.get_config["output"]["disable_progress_bar"])
             for video_path in video_paths
         )
+
+        # Hack to have a progress bar
+        pbar = tqdm(total=len(video_paths),
+                    ncols=100,
+                    file=sys.stderr)
+
+        for _ in res:
+            pbar.update(1)
 
 
 if __name__ == "__main__":
