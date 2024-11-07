@@ -138,7 +138,9 @@ def track_object(input_video_path,
 
     pbar.close()
     video.release()
-    out.release()
+    if out is not None:
+        out.release()
+
     del model
 
     return f"Finished {video_name}.mp4"
