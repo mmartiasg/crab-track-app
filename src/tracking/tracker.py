@@ -21,20 +21,20 @@ def track_object(input_video_path,
                  disable_progress_bar=True):
     """
     This runs all trackers defined in the trackers_name_list for one video shows every frame in a window
-    Saves the results in results, and the resulted video will be saved in this same directory with the name video_name+_bbox_preds.mp4
+    Saves the results in results, and the resulted video will be saved in this same directory with the same name.
 
     Parameters
     ----------
-    :param disable_progress_bar:
-    :param input_video_path: Path where the video is located
-    :param stats_path:
+    :param disable_progress_bar: True or false to disable the progress bar.
+    :param input_video_path: Path where the video is located.
+    :param stats_path: Path where the stats file is located.
     :param video_name: Name of the video that will be used to create the output video and the result files.
-    :param tracker_name:
-    :param model_weights:
-    :param device:
-    :param nms_threshold:
-    :param confidence_threshold:
-    :param output_video_path:
+    :param tracker_name: Name of the tracker that will be used to create the output video.
+    :param model_weights: Path where the model weights are located.
+    :param device: cpu, cuda or mps.
+    :param nms_threshold: NMS threshold from 0 to 1.0.
+    :param confidence_threshold: Confidence threshold from 0 to 1.0.
+    :param output_video_path: Path where the output video is located.
     """
 
     video = cv2.VideoCapture(input_video_path)
