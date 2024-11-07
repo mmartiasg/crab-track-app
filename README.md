@@ -132,7 +132,7 @@ The important part is the **volumes** section
 ```
 
 ## Console output:
-![image](readme_images/reduce_log_to_global.png)
+![image](readme_images/reduce_to_global.png)
 
 ## Output
 
