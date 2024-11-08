@@ -28,6 +28,7 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
 - Options to save detection results as videos.
 - Adjustable parameters to improve detection accuracy.
 - Missing points are interpolated using the previous and next points.
+- The provided model **0.2.0** has been trained on 30,000 images for one week using a RTX 4070ti.
 
 ## Installation
 
@@ -132,7 +133,7 @@ The important part is the **volumes** section
 ```
 
 ## Console output:
-![image](readme_images/reduce_to_global.png)
+![image](readme_images/example-execution.png)
 
 ## Output
 
