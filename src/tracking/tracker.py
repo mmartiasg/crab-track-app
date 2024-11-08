@@ -107,7 +107,7 @@ def track_object(input_video_path,
         for bbox in results[0].boxes:
             (x1, y1, x2, y2) = bbox.xyxy.squeeze().cpu().numpy().astype(np.int32)
 
-            if out is not None and not out.isOpened():
+            if out is not None and out.isOpened():
                 # use predicted bounding box coordinates to draw a rectangle
                 cv2.rectangle(frame, (x1, y1), (x2, y2), bbox_color[tracker_name], 3)
                 cv2.putText(frame, f"{tracker_name}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
@@ -128,7 +128,8 @@ def track_object(input_video_path,
         frame_index += 1
         pbar.set_description(f"Video: {video_name}")
         pbar.update(1)
-        if out is not None and not out.isOpened():
+
+        if out is not None and out.isOpened():
             out.write(frame)
 
     stats_df = pd.DataFrame(tracker_stats)
@@ -138,7 +139,7 @@ def track_object(input_video_path,
 
     pbar.close()
     video.release()
-    if out is not None and not out.isOpened():
+    if out is not None and out.isOpened():
         out.release()
 
     del model
