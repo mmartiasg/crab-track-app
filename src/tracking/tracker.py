@@ -65,7 +65,7 @@ def track_object(input_video_path,
         )
 
     # load video
-    if out is not None:
+    if out is not None and not out.isOpened():
         print(f'[INFO] Writer not initialized check the output path {os.path.join(output_video_path, video_name + ".mp4")}')
 
     # Instanciate model
@@ -107,7 +107,7 @@ def track_object(input_video_path,
         for bbox in results[0].boxes:
             (x1, y1, x2, y2) = bbox.xyxy.squeeze().cpu().numpy().astype(np.int32)
 
-            if out is not None:
+            if out is not None and not out.isOpened():
                 # use predicted bounding box coordinates to draw a rectangle
                 cv2.rectangle(frame, (x1, y1), (x2, y2), bbox_color[tracker_name], 3)
                 cv2.putText(frame, f"{tracker_name}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
@@ -128,7 +128,7 @@ def track_object(input_video_path,
         frame_index += 1
         pbar.set_description(f"Video: {video_name}")
         pbar.update(1)
-        if out is not None:
+        if out is not None and not out.isOpened():
             out.write(frame)
 
     stats_df = pd.DataFrame(tracker_stats)
@@ -138,9 +138,11 @@ def track_object(input_video_path,
 
     pbar.close()
     video.release()
-    if out is not None:
+    if out is not None and not out.isOpened():
         out.release()
 
     del model
 
-    return f"Finished {video_name}.mp4"
+    return {"input_video_path": input_video_path,
+        "output_video_path": output_video_path,
+        "coordinates": stats_df.values}

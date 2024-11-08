@@ -1,10 +1,9 @@
 FROM python:3.10.12
+RUN apt update && apt install -y libgl1
 WORKDIR /app
-COPY config config
-COPY src src
-COPY models models
-COPY main.py main.py
-RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
-
+COPY models models
+COPY config config
+COPY src src
+COPY main.py main.py

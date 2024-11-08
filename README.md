@@ -40,6 +40,8 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
 ## Setup
 
 ### Local
+💡**Hint** Although this is not the recommended way to use the app, we have provided instructions for it. However, we encourage using Docker for optimal performance and consistency.
+
 1. **Create a local environment**
     ```bash
       python3 -m venv /path/to/virtualenv/name_virtual_env
@@ -75,10 +77,22 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
    ```
 
 ### Docker
+  💡**Hint** Docker ensures the app runs consistently across environments, eliminating 'it works on my machine' issues, and provides a powerful, portable solution for efficient deployment, easy scaling, and optimized resource use.
+
+  💡**Hint** Please note that this script utilizes all available resources in the Docker instance. If you allocate 4 vCPUs, the script will use all of them. Ensure approximately 0.5 GB of memory is allocated per vCPU.
+
+  💡**Hint** Please note that the Docker image requires at least 2.5GB of available disk space and takes approximately 30 up to 50 seconds to build from scratch.
+
 1. **Install Docker client**
 Find your distribution installer here [Docker desktop](https://www.docker.com/products/docker-desktop/)
 
-2. **Configuration**
+2. **Preapre the config file**
+Copy the template provided for docker and change the name to **run_conf.yaml**
+  ```bash
+    cp config/run_conf_sample_docker.yaml config/run_conf.yaml
+  ```
+
+3. **Configuration**
    ```yaml
       model:
         path: # Model weight's path.
@@ -94,40 +108,42 @@ Find your distribution installer here [Docker desktop](https://www.docker.com/pr
         disable_progress_bar: true # If true the progress bar per each video will be supress.
    ```
 
-    💡**Hint:** I have provided a sample for each case that you can use as initial template in the config folder.
-    A base model has been provided in **models**:
-    the onnx versions is already optimize for a fast cpu inference while the .pt is the raw model from pytorch unoptimized.
+   💡**Hint:** We've provided a sample template for each case in the **config** folder to help you get started. A base model is also available in the models folder: the **ONNX** version is already optimized for fast **CPU inference**, while the .pt file is the unoptimized raw model from PyTorch.
     ```
     Project
-    ├-- README.md
+    |-- README.md
     |-- config
-    │   ├-- run_conf_sample_docker.yaml
-    │   |-- run_conf_sample_local.yaml
+       |-- run_conf_sample_docker.yaml
+       |-- run_conf_sample_local.yaml
     |-- models
         |--0.2.0
             |-- tracking.onnx
             |-- tracking.pt
     ```
 
-3. **Docker compose configuration**
+4. **Docker compose configuration**
 The important part is the **volumes** section
    ```yaml
     volumes:
       - type: bind # Do not change!
         source: # Change to the folder in the local file system where the videos are located.
         target: /dataset/samples # Do not change!
-      - type: bind # Do not change! 
+      - type: bind # Do not change!
         source: # Change to an existing folder where you want the results to be saved.
         target: /results # Do not change!
    ```
 
 ## Usage
 ### Local
+To run locally, specify the path to the YAML configuration file:
+
 ```bash
     python main.py --config_path=config/run_conf.yaml
 ```
 
 ### Docker
+This command builds and runs the Docker image. Once the process is complete, the Docker container will be stopped:
+
 ```bash
       docker compose -f docker-compose.yaml up --build
 ```
@@ -136,19 +152,17 @@ The important part is the **volumes** section
 ![image](readme_images/example-execution.png)
 
 ## Output
-
 ### Files
-The output will be saved in the folder selected in the case of the local in **output -> path** in the case of the Docker 
-in the **volumes -> target** of the second entry. A .csv and a video if **output -> export_videos is true** will be saved in stats and videos folders respectively.
+The output will be saved in the folder specified under **output -> path** for local runs, and in **volumes -> target** for Docker. A .csv file will be saved in the **'stats' folder**, and a video will be saved in the **'videos' folder** if **output -> export_videos** is set to **true**.
 
-For example if we have just one video called 1.mp4 after the process has finished in the results folder we can find:
+For example, if we have a single video called **1.mp4**, after the process is **complete**, you can find the following in the results folder:
 ```
 Project
-├-- README.md
+|-- README.md
 |-- results
-│   ├-- stats
+    |-- stats
         |-- 1.csv
-│   |-- videos
+    |-- videos
         |-- 1.mp4
 ```
 
