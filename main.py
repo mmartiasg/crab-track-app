@@ -8,6 +8,7 @@ import glob
 import multiprocessing as mpt
 from tqdm.auto import tqdm
 import sys
+from src.tracking.videoRender import render_video
 
 
 def main():
@@ -34,7 +35,8 @@ def main():
     video_paths = glob.glob(
         os.path.join(config.get_config["input"]["path"], f"*.{config.get_config['input']['extension']}"))
 
-    with parallel_backend("loky"):
+    with parallel_backend("loky", verbose=100):
+        # TODO: use res to pruduce stats at the end or draw the path traveled in a video.
         res = Parallel(n_jobs=mpt.cpu_count(), return_as="generator_unordered")(
             delayed(track_object)(input_video_path=video_path,
                                   output_video_path=output_video_path,
@@ -50,13 +52,12 @@ def main():
             for video_path in video_paths
         )
 
-        # Hack to have a progress bar
-        pbar = tqdm(total=len(video_paths),
-                    ncols=100,
-                    file=sys.stderr)
-
-        for _ in res:
-            pbar.update(1)
+        # Note: This is here to wait for all the process to finish.
+        # This place is where the post process are applied such as:
+            # - Calculating statistics or
+            # - Videos with the boundary box and traveled path
+        for r in res:
+            render_video(**r)
 
 
 if __name__ == "__main__":
