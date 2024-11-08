@@ -128,6 +128,7 @@ def track_object(input_video_path,
         frame_index += 1
         pbar.set_description(f"Video: {video_name}")
         pbar.update(1)
+
         if out is not None and out.isOpened():
             out.write(frame)
 
