@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 import argparse
 import os
-from src.tracking.tracker import track_object
+from src.tracking.tracker import track_object, track_object_v2
 from src.utils.constants import Config
 from joblib import Parallel, delayed, parallel_backend
 import glob
 import multiprocessing as mpt
-from tqdm.auto import tqdm
-import sys
 from src.tracking.videoRender import render_video
+mpt.set_start_method('fork', force=True)
 
 
 def main():
@@ -37,8 +36,9 @@ def main():
 
     with parallel_backend("loky", verbose=100):
         # TODO: use res to pruduce stats at the end or draw the path traveled in a video.
-        res = Parallel(n_jobs=mpt.cpu_count(), return_as="generator_unordered")(
-            delayed(track_object)(input_video_path=video_path,
+        # mpt.cpu_count()
+        res = Parallel(n_jobs=mpt.cpu_count()//4, return_as="generator_unordered")(
+            delayed(track_object_v2)(input_video_path=video_path,
                                   output_video_path=output_video_path,
                                   stats_path=os.path.join(config.get_config["output"]["path"], "stats"),
                                   # keep the name of the video

@@ -6,10 +6,11 @@ services:
     tty: true
     volumes:
       - type: bind
-        source: /Users/matiasgonzalez/workspace/datasets/sample_dataset_icman
+#        source: /home/matias/workspace/datasets/ICMAN-30-Octubre-2022
+        source: /home/matias/workspace/datasets/sample_dataset_icman
         target: /dataset/samples
       - type: bind
-        source: /Users/matiasgonzalez/workspace/crab-track-app/results
+        source: /home/matias/workspace/crab-track-app/results
         target: /results
     environment:
       YOLO_VERBOSE: false

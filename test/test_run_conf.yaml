@@ -1,0 +1,12 @@
+model:
+  path: models/0.2.0/tracking.onnx
+  conf_threshold: 0.8
+  nms_threshold: 0.5
+  device: cpu
+input:
+  path: test_data
+  extension: avi
+output:
+  export_videos: false
+  path: test_results
+  disable_progress_bar: true
