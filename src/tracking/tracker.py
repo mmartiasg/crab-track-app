@@ -7,6 +7,24 @@ from ultralytics import YOLO
 import numpy as np
 import os
 import sys
+from src.dataloaders.video_loader import VideoDataloader
+
+
+def track_object_v2(input_video_path,
+                 output_video_path,
+                 stats_path,
+                 video_name,
+                 tracker_name,
+                 model_weights,
+                 device="cpu",
+                 confidence_threshold=0.8,
+                 nms_threshold=0.5,
+                 disable_progress_bar=True):
+
+    loader = VideoDataloader(video_path=input_video_path)
+
+    for index, frame in enumerate(loader):
+        cv2.imwrite(f"frame{index}.jpg", frame)
 
 
 def track_object(input_video_path,
