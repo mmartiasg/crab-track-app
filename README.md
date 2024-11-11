@@ -148,8 +148,13 @@ This command builds and runs the Docker image. Once the process is complete, the
       docker compose -f docker-compose.yaml up --build
 ```
 
+By adding **docker image prune -f** we can clean up all the intermediate images produce by docker:
+```bash
+  docker compose -f docker-compose.yaml up --build && docker image prune -f
+````
+
 ## Console output:
-![image](readme_images/example-execution.png)
+![image](readme_images/process_progress_global.png)
 
 ## Output
 ### Files
@@ -182,3 +187,15 @@ Project
 - **Index**: The nth frame in the sequence.
 - **pred_bbox_x1** and **pred_bbox_y1**: Upper-left corner coordinates of the bounding box.
 - **pred_bbox_x2** and **pred_bbox_y2**: Lower-right corner coordinates of the bounding box.
+
+### Logs
+The script will output logs for the whole process and one per video
+
+Those logs are stored in the output folder **results**
+![image](readme_images/logs_folder.png)
+
+The main log will output information related to the whole process video, process or post process applied after:
+![image](readme_images/main_log.png)
+
+The video logs will output information related to the process frames for that video:
+![image](readme_images/video_log.png)
