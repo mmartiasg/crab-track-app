@@ -32,7 +32,6 @@ def main():
                                 mode="w",
                                 encoding="utf-8"
                             )
-    main_logging.addHandler(logger_file_handler)
     formatter = logging.Formatter(
                     "{asctime} - {levelname} - {message}",
                     style="{",
@@ -40,6 +39,7 @@ def main():
                 )
     logger_file_handler.setFormatter(formatter)
     main_logging.setLevel(logging.DEBUG)
+    main_logging.addHandler(logger_file_handler)
 
     main_logging.info("Log start")
 
@@ -81,6 +81,9 @@ def main():
         for r in res:
             main_logging.info(f"Video: {r['input_video_path']} finished.")
             render_video(**r)
+
+        logger_file_handler.close()
+        del main_logging
 
 
 if __name__ == "__main__":

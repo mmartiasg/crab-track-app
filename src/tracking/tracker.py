@@ -34,7 +34,6 @@ def track_object_v2(input_video_path,
                                 mode="w",
                                 encoding="utf-8"
                             )
-    tracker_logging.addHandler(logger_file_handler)
     formatter = logging.Formatter(
                     "{asctime} - {levelname} - {message}",
                     style="{",
@@ -42,6 +41,7 @@ def track_object_v2(input_video_path,
                 )
     logger_file_handler.setFormatter(formatter)
     tracker_logging.setLevel(logging.DEBUG)
+    tracker_logging.addHandler(logger_file_handler)
 
     tracker_logging.info(f"Start tracking {video_name}")
 
@@ -133,10 +133,17 @@ def track_object_v2(input_video_path,
     tracker_logging.info(f"Finished tracking {video_name}")
 
     tracker_logging.info("Free resources allocated")
+
+    # close logger file handlers
+    for handler in tracker_logging.handlers:
+        handler.close()
+        tracker_logging.removeHandler(handler)
+
+    del logger_file_handler
+    del tracker_logging
     del loader
     del data_loader
     del model
-    del tracker_logging
 
     return {
         "input_video_path": input_video_path,
