@@ -1,8 +1,8 @@
 import cv2
+import logging
 import random
 import time
 import pandas as pd
-import torch
 from tqdm.auto import tqdm
 from ultralytics import YOLO
 import numpy as np
@@ -12,97 +12,137 @@ from src.dataloaders.video_loader import VideoDataloader
 from torch.utils.data import DataLoader
 import torchvision
 import multiprocessing as mpt
-# mpt.set_start_method('fork', force=True)
-mpt.set_start_method('spawn', force=True)
+
+mpt.set_start_method('fork', force=True)
 
 
 def track_object_v2(input_video_path,
-                 stats_path,
-                 video_name,
-                 tracker_name,
-                 model_weights,
-                 device="cpu",
-                 confidence_threshold=0.8,
-                 nms_threshold=0.5,
-                 disable_progress_bar=None,
-                 output_video_path=None):
+                    out_path,
+                    video_name,
+                    tracker_name,
+                    model_weights,
+                    device="cpu",
+                    confidence_threshold=0.8,
+                    nms_threshold=0.5,
+                    disable_progress_bar=None,
+                    output_video_path=None):
+
+    # Set up logger
+    tracker_logging = logging.getLogger(__name__)
+    logger_file_handler = logging.FileHandler(
+                                os.path.join(out_path, "logs", f"tracker_video_{video_name}.log"),
+                                mode="w",
+                                encoding="utf-8"
+                            )
+    tracker_logging.addHandler(logger_file_handler)
+    formatter = logging.Formatter(
+                    "{asctime} - {levelname} - {message}",
+                    style="{",
+                    datefmt="%Y-%m-%d %H:%M",
+                )
+    logger_file_handler.setFormatter(formatter)
+    tracker_logging.setLevel(logging.DEBUG)
+
+    tracker_logging.info(f"Start tracking {video_name}")
 
     video_frame_transform = torchvision.transforms.Compose([
         torchvision.transforms.ToPILImage(),
-        torchvision.transforms.Resize((128, 128)),
-        # torchvision.transforms.Resize((640, 640),
-        #                               interpolation=torchvision.transforms.InterpolationMode.BILINEAR,
-        #                               max_size=None,
-        #                               antialias=True),
+        torchvision.transforms.Resize((256, 256)),
         torchvision.transforms.ToTensor()
     ])
 
     loader = VideoDataloader(video_path=input_video_path,
                              transform=video_frame_transform)
 
+    tracker_logging.debug(f"Video {video_name} loaded with frames: {loader.__len__()}")
+
     # Instance model
     model = YOLO(model_weights, task="detect", verbose=False)
 
     tracker_stats = []
-    BATCH_SIZE = 8
-    # TODO: check why changing the num_works > 0 fails with the pickle error...
-    data_loader = DataLoader(loader, batch_size=BATCH_SIZE, shuffle=False, num_workers=mpt.cpu_count()//4)
-    # data_loader = DataLoader(loader, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+    BATCH_SIZE = 128
+    data_loader = DataLoader(loader, batch_size=BATCH_SIZE, shuffle=False, num_workers=mpt.cpu_count() // 4)
 
     frame_index = 0
+    frames_with_meassurements = 0
+    frames_without_meassurements = 0
     for batch in data_loader:
-        start_time = time.time()
-
         # Track works with raw images
+        # not sure how to feed it using a dataloader.
         # batch_results = model.track(batch,
         #                       # persist=True,
         #                       conf=confidence_threshold,
         #                       iou=nms_threshold,
         #                       verbose=False,
-        #                       device=device)
+        #                       device=device,
+        #                       imgsz=(640, 640))
 
         batch_results = model.predict(batch,
-                              conf=confidence_threshold,
-                              iou=nms_threshold,
-                              verbose=False,
-                              device=device)
-        duration = time.time() - start_time
+                                      conf=confidence_threshold,
+                                      iou=nms_threshold,
+                                      verbose=False,
+                                      device=device
+                                      )
 
         for results in batch_results:
-            record = {"dataset": "ICMAN3OCT2022",
-                      "tracker": tracker_name,
-                      "video": video_name,
-                      "frame": frame_index,
-                      "inference_time": duration / BATCH_SIZE,
-                      "pred_bbox_x1": None,
-                      "pred_bbox_y1": None,
-                      "pred_bbox_x2": None,
-                      "pred_bbox_y2": None
-                      }
-            if len(results) > 0:
-                for bbox in results[0].boxes:
-                    (x1, y1, x2, y2) = bbox.xyxy.squeeze().cpu().numpy().astype(np.int32)
-                    record["pred_bbox_x1"] = x1
-                    record["pred_bbox_y1"] = y1
-                    record["pred_bbox_x2"] = x2
-                    record["pred_bbox_y2"] = y2
-
-            tracker_stats.append(record)
+            if len(results.boxes) > 0:
+                for bbox in results.boxes:
+                    (x1, y1, x2, y2) = bbox.xyxyn.squeeze().cpu().numpy()
+                    record = {"dataset": "ICMAN3OCT2022",
+                              "tracker": tracker_name,
+                              "video": video_name,
+                              "frame": frame_index,
+                              "inference_time": results.speed["inference"] / BATCH_SIZE,
+                              "pred_bbox_x1": x1,
+                              "pred_bbox_y1": y1,
+                              "pred_bbox_x2": x2,
+                              "pred_bbox_y2": y2
+                              }
+                    tracker_stats.append(record)
+                    frames_with_meassurements += 1
+            else:
+                record = {"dataset": "ICMAN3OCT2022",
+                          "tracker": tracker_name,
+                          "video": video_name,
+                          "frame": frame_index,
+                          "inference_time": results.speed["inference"] / BATCH_SIZE,
+                          "pred_bbox_x1": None,
+                          "pred_bbox_y1": None,
+                          "pred_bbox_x2": None,
+                          "pred_bbox_y2": None
+                          }
+                frames_without_meassurements += 1
+                tracker_stats.append(record)
             frame_index += 1
 
-    stats_df = pd.DataFrame(tracker_stats)
-    # interpolate frames based on the previous and next frames when missing.
-    stats_df[["pred_bbox_x1", "pred_bbox_y1", "pred_bbox_x2", "pred_bbox_y2"]] = stats_df[["pred_bbox_x1", "pred_bbox_y1", "pred_bbox_x2", "pred_bbox_y2"]].interpolate().astype(int)
-    stats_df.to_csv(os.path.join(stats_path, f"{video_name}.csv"))
+        tracker_logging.debug(f"""
+                    Frames processed: {frame_index} |
+                    Frames with prediction over ({confidence_threshold}): {frames_with_meassurements} |
+                    Frames without prediction ({confidence_threshold}): {frames_without_meassurements} |
+                    Process time total: {round(results.speed["inference"], 4)},
+                    per frame: {round(results.speed["inference"] / BATCH_SIZE, 4)} in ms
+                    """)
 
-    loader.release()
+    stats_df = None
+    try:
+        stats_df = pd.DataFrame(tracker_stats)
+        stats_df.to_csv(os.path.join(out_path, "stats", f"{video_name}.csv"), index=False)
+    except Exception as e:
+        tracker_logging.critical("Saving dataframe", exc_info=True)
+
+    tracker_logging.info(f"Finished tracking {video_name}")
+
+    tracker_logging.info("Free resources allocated")
     del loader
     del data_loader
     del model
+    del tracker_logging
 
-    return {"input_video_path": input_video_path,
+    return {
+        "input_video_path": input_video_path,
         "output_video_path": None,
-        "coordinates": stats_df.values}
+        "coordinates": stats_df.values if stats_df is not None else None
+    }
 
 
 def track_object(input_video_path,
@@ -157,12 +197,14 @@ def track_object(input_video_path,
     out = None
     if output_video_path is not None:
         out = cv2.VideoWriter(
-            os.path.join(output_video_path, video_name + ".mp4"), cv2.VideoWriter_fourcc(*"mp4v"), original_frame_rate, (width, height)
+            os.path.join(output_video_path, video_name + ".mp4"), cv2.VideoWriter_fourcc(*"mp4v"), original_frame_rate,
+            (width, height)
         )
 
     # load video
     if out is not None and not out.isOpened():
-        print(f'[INFO] Writer not initialized check the output path {os.path.join(output_video_path, video_name + ".mp4")}')
+        print(
+            f'[INFO] Writer not initialized check the output path {os.path.join(output_video_path, video_name + ".mp4")}')
 
     # Instanciate model
     model = YOLO(model_weights, task="detect", verbose=False)
@@ -241,5 +283,5 @@ def track_object(input_video_path,
     del model
 
     return {"input_video_path": input_video_path,
-        "output_video_path": output_video_path,
-        "coordinates": stats_df.values}
+            "output_video_path": output_video_path,
+            "coordinates": stats_df.values}
