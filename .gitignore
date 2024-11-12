@@ -39,6 +39,8 @@ MANIFEST
 .csv
 .mp4
 run_conf.yaml
+test/test_results
+.log
 
 # Installer logs
 pip-log.txt
