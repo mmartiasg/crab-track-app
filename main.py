@@ -103,12 +103,14 @@ def main():
 
             compose_callback = ComposeCallback(callback_list)
             save_raw_data_callback = CallbackSaveToDisk(file_path=os.path.join(config.get_config["output"]["path"],
+                                                                               "stats",
                                                                                r["video_name"] + ".csv"))
             callbacks = [compose_callback, save_raw_data_callback]
 
             for callback in callbacks:
                 callback(r["coordinates"])
-                main_logging.info(f"Video: {r['input_video_path']} finished.")
+                main_logging.info(f"Video: {r['video_name']} finished.")
+
             del callbacks
 
         logger_file_handler.close()
