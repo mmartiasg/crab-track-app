@@ -70,10 +70,11 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
       input:
         path: # Absolute path where the videos are located in the current file system.
         extension: mp4 # Video extension.
+      resolution: # video resolution
+        width: 1920
+        height: 1080
       output:
-        export_videos: false # If false the video samples with the boundary box will not be saved.
         path: # Absolute path where the results will be saved in the current file system.
-        disable_progress_bar: true # If true the progress bar per each video will be supress.
    ```
 
 ### Docker
@@ -102,10 +103,11 @@ Copy the template provided for docker and change the name to **run_conf.yaml**
       input:
         path: /dataset/samples # !Do not change this! This is the docker path where the input will be mapped (target)!
         extension: mp4 # Video extension.
+      resolution: # video resolution
+        width: 1920
+        height: 1080
       output:
-        export_videos: false # If false the video samples with the boundary box will not be saved.
-        path: /results # !Do not change this! This is the docker path where the output will be mapped (target).
-        disable_progress_bar: true # If true the progress bar per each video will be supress.
+        path: # Absolute path where the results will be saved in the current file system.
    ```
 
    💡**Hint:** We've provided a sample template for each case in the **config** folder to help you get started. A base model is also available in the models folder: the **ONNX** version is already optimized for fast **CPU inference**, while the .pt file is the unoptimized raw model from PyTorch.
