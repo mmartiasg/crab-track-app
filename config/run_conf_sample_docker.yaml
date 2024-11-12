@@ -6,7 +6,8 @@ model:
 input:
   path: /dataset/samples # do not change it
   extension: mp4
+  resolution:
+    width: 1920
+    height: 1080
 output:
-  export_videos: false
   path: /results # do not change it
-  disable_progress_bar: true

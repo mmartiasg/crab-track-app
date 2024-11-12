@@ -1,5 +1,4 @@
 import unittest
-from src.dataloaders.video_loader import VideoDataloader
 from src.utils.constants import Config
 import os
 import numpy as np
@@ -26,7 +25,8 @@ class DataloaderSuitCase(unittest.TestCase):
             torchvision.transforms.Resize((128, 128)),
             torchvision.transforms.ToTensor()
         ])
-        loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"], "test.avi"),
+        loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"],
+                                                         "test_sample_1_720p.mp4"),
                                  transform=video_frame_transform)
         frames = []
         i = 0
@@ -45,7 +45,8 @@ class DataloaderSuitCase(unittest.TestCase):
             torchvision.transforms.Resize((128, 128)),
             lambda frame: torch.tensor(np.array(frame), dtype=torch.uint8),
         ])
-        loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"], "test.avi"),
+        loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"],
+                                                         "test_sample_1_720p.mp4"),
                                  transform=video_frame_transform)
 
         data_loader = DataLoader(loader, batch_size=100, shuffle=False, num_workers=0)
@@ -67,10 +68,11 @@ class DataloaderSuitCase(unittest.TestCase):
             torchvision.transforms.Resize((128, 128)),
             torchvision.transforms.ToTensor()
         ])
-        loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"], "test.avi"),
+        loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"],
+                                                         "test_sample_2_720p.mp4"),
                                  transform=video_frame_transform)
 
-        data_loader = DataLoader(loader, batch_size=16, shuffle=False, num_workers=0)
+        data_loader = DataLoader(loader, batch_size=1024, shuffle=False, num_workers=0)
 
         batches = []
         frames_count = 0
@@ -78,7 +80,7 @@ class DataloaderSuitCase(unittest.TestCase):
             batches.append(batch)
             frames_count += len(batch)
 
-        self.assertEqual(batches[0].shape, (16, 3, 128, 128))
+        self.assertEqual(batches[0].shape, (1024, 3, 128, 128))
         self.assertEqual(batches[0][0].shape, (3, 128, 128))
         self.assertEqual(frames_count, loader.__len__())
         self.assertTrue(np.sum(np.abs(batches[0][0].numpy() - batches[-1][0].numpy())) > 0)

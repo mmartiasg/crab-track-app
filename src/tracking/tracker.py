@@ -12,7 +12,6 @@ from src.dataloaders.video_loader import VideoDataloader
 from torch.utils.data import DataLoader
 import torchvision
 import multiprocessing as mpt
-
 mpt.set_start_method('fork', force=True)
 
 
@@ -23,9 +22,7 @@ def track_object_v2(input_video_path,
                     model_weights,
                     device="cpu",
                     confidence_threshold=0.8,
-                    nms_threshold=0.5,
-                    disable_progress_bar=None,
-                    output_video_path=None):
+                    nms_threshold=0.5):
 
     # Set up logger
     tracker_logging = logging.getLogger(__name__)
@@ -60,7 +57,7 @@ def track_object_v2(input_video_path,
     model = YOLO(model_weights, task="detect", verbose=False)
 
     tracker_stats = []
-    BATCH_SIZE = 128
+    BATCH_SIZE = 256
     data_loader = DataLoader(loader, batch_size=BATCH_SIZE, shuffle=False, num_workers=mpt.cpu_count() // 4)
 
     frame_index = 0
@@ -126,9 +123,8 @@ def track_object_v2(input_video_path,
     stats_df = None
     try:
         stats_df = pd.DataFrame(tracker_stats)
-        stats_df.to_csv(os.path.join(out_path, "stats", f"{video_name}.csv"), index=False)
     except Exception as e:
-        tracker_logging.critical("Saving dataframe", exc_info=True)
+        tracker_logging.critical("Building dataframe", exc_info=True)
 
     tracker_logging.info(f"Finished tracking {video_name}")
 
@@ -146,9 +142,8 @@ def track_object_v2(input_video_path,
     del model
 
     return {
-        "input_video_path": input_video_path,
-        "output_video_path": None,
-        "coordinates": stats_df.values if stats_df is not None else None
+        "video_name": video_name,
+        "coordinates": stats_df
     }
 
 
