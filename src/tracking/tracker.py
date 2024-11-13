@@ -32,7 +32,7 @@ def track_object_v2(input_video_path,
                                 encoding="utf-8"
                             )
     formatter = logging.Formatter(
-                    "{asctime} - {levelname} - {message}",
+                    "{asctime} - {levelname} - {filename} - {funcName} - {message}",
                     style="{",
                     datefmt="%Y-%m-%d %H:%M:%S",
                 )
@@ -48,11 +48,11 @@ def track_object_v2(input_video_path,
         torchvision.transforms.ToTensor()
     ])
 
-    BATCH_SIZE = 32
+    BATCH_SIZE = 64
     loader = VideoFramesGenerator(video_path=input_video_path,
-                                  transform=video_frame_transform,
+                                  transform=None, #video_frame_transform,
                                   batch_size=BATCH_SIZE,
-                                  num_threads=4)
+                                  num_threads=2)
 
     tracker_logging.debug(f"Video {video_name} loaded with frames: {loader.__len__()}")
 
@@ -67,21 +67,22 @@ def track_object_v2(input_video_path,
     for batch in loader:
         # Track works with raw images
         # not sure how to feed it using a dataloader.
-        # batch_results = model.track(batch,
-        #                       # persist=True,
-        #                       conf=confidence_threshold,
-        #                       iou=nms_threshold,
-        #                       verbose=False,
-        #                       device=device,
-        #                       imgsz=(640, 640))
+        batch_results = model.track(batch,
+                              persist=True,
+                              conf=confidence_threshold,
+                              iou=nms_threshold,
+                              verbose=False,
+                              device=device,
+                              # imgsz=(256, 256),
+                              stream=True)
 
-        batch_results = model.predict(batch,
-                                      conf=confidence_threshold,
-                                      iou=nms_threshold,
-                                      verbose=False,
-                                      device=device,
-                                      stream=True
-                                      )
+        # batch_results = model.predict(batch,
+        #                               conf=confidence_threshold,
+        #                               iou=nms_threshold,
+        #                               verbose=False,
+        #                               device=device,
+        #                               stream=True
+        #                               )
 
         for results in batch_results:
             if len(results.boxes) > 0:

@@ -36,9 +36,9 @@ def main():
         encoding="utf-8"
     )
     formatter = logging.Formatter(
-        "{asctime} - {levelname} - {message}",
+        "{asctime} - {levelname} - {filename} - {funcName} - {message}",
         style="{",
-        datefmt="%Y-%m-%d %H:%M",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     logger_file_handler.setFormatter(formatter)
     main_logging.setLevel(logging.DEBUG)
@@ -109,8 +109,8 @@ def main():
 
             for callback in callbacks:
                 callback(r["coordinates"])
-                main_logging.info(f"Video: {r['video_name']} finished.")
 
+            main_logging.info(f"Video: {r['video_name']} finished.")
             del callbacks
 
         logger_file_handler.close()

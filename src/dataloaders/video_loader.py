@@ -69,7 +69,8 @@ class VideoFramesGenerator:
                 batch = [self.transform(frame) for frame in frames.asnumpy()]
                 return torch.stack(batch)
 
-            return (torch.tensor(frames.asnumpy())/255.).transpose(1, 3)
+            # return frames.asnumpy() #(torch.tensor(frames.asnumpy())/255.).transpose(1, 3)
+            return [cv2.resize(frame, (256, 256)) for frame in frames.asnumpy()]
         else:
             raise StopIteration
 
