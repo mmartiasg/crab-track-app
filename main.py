@@ -59,7 +59,7 @@ def main():
 
     with parallel_backend("loky", verbose=100):
         # TODO: use res to pruduce stats at the end or draw the path traveled in a video.
-        res = Parallel(n_jobs=mpt.cpu_count() // 4, return_as="generator_unordered")(
+        res = Parallel(n_jobs=mpt.cpu_count()//4, return_as="generator_unordered")(
             delayed(track_object_v2)(input_video_path=video_path,
                                      out_path=config.get_config["output"]["path"],
                                      # keep the name of the video
@@ -90,7 +90,7 @@ def main():
                                                           r["video_name"] + "_post_processed.csv"))
             ]
 
-            if r["video_name"] == "1_crop" or r["video_name"] == "12_crop.mp4":
+            if r["video_name"] == "1_crop" or r["video_name"] == "12_crop" or r["video_name"] == "8_sample":
                 render_callback = CallbackRenderVideo(
                     output_video_path=os.path.join(config.get_config["output"]["path"],
                                                    "videos",

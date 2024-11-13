@@ -3,16 +3,16 @@ import logging
 import random
 import time
 import pandas as pd
+import torch
 from tqdm.auto import tqdm
 from ultralytics import YOLO
 import numpy as np
 import os
 import sys
-from src.dataloaders.video_loader import VideoDataloader
+from src.dataloaders.video_loader import VideoDataloader, VideoDataloaderPytorch, VideoDataloaderDecord, VideoFramesGenerator
 from torch.utils.data import DataLoader
 import torchvision
 import multiprocessing as mpt
-mpt.set_start_method('fork', force=True)
 
 
 def track_object_v2(input_video_path,
@@ -34,7 +34,7 @@ def track_object_v2(input_video_path,
     formatter = logging.Formatter(
                     "{asctime} - {levelname} - {message}",
                     style="{",
-                    datefmt="%Y-%m-%d %H:%M",
+                    datefmt="%Y-%m-%d %H:%M:%S",
                 )
     logger_file_handler.setFormatter(formatter)
     tracker_logging.setLevel(logging.DEBUG)
@@ -48,8 +48,11 @@ def track_object_v2(input_video_path,
         torchvision.transforms.ToTensor()
     ])
 
-    loader = VideoDataloader(video_path=input_video_path,
-                             transform=video_frame_transform)
+    BATCH_SIZE = 32
+    loader = VideoFramesGenerator(video_path=input_video_path,
+                                  transform=video_frame_transform,
+                                  batch_size=BATCH_SIZE,
+                                  num_threads=4)
 
     tracker_logging.debug(f"Video {video_name} loaded with frames: {loader.__len__()}")
 
@@ -57,13 +60,11 @@ def track_object_v2(input_video_path,
     model = YOLO(model_weights, task="detect", verbose=False)
 
     tracker_stats = []
-    BATCH_SIZE = 256
-    data_loader = DataLoader(loader, batch_size=BATCH_SIZE, shuffle=False, num_workers=mpt.cpu_count() // 4)
 
     frame_index = 0
     frames_with_meassurements = 0
     frames_without_meassurements = 0
-    for batch in data_loader:
+    for batch in loader:
         # Track works with raw images
         # not sure how to feed it using a dataloader.
         # batch_results = model.track(batch,
@@ -78,7 +79,8 @@ def track_object_v2(input_video_path,
                                       conf=confidence_threshold,
                                       iou=nms_threshold,
                                       verbose=False,
-                                      device=device
+                                      device=device,
+                                      stream=True
                                       )
 
         for results in batch_results:
@@ -138,7 +140,6 @@ def track_object_v2(input_video_path,
     del logger_file_handler
     del tracker_logging
     del loader
-    del data_loader
     del model
 
     return {
