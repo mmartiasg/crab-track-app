@@ -4,21 +4,22 @@ import torch
 from decord import VideoReader
 from decord import cpu
 
-# class VideoDataloaderDecord(torch.utils.data.Dataset):
-#     def __init__(self, video_path, transform=None):
-#         self.video_path = video_path
-#         self.transform = transform
-#         self.total_frames = len(VideoReader(video_path, ctx=cpu(0)))
-#
-#     def __len__(self):
-#         return self.total_frames
-#
-#     def __getitem__(self, idx):
-#         reader = VideoReader(self.video_path, ctx=cpu(0))  # Initialize in each worker
-#         frame = reader[idx].asnumpy()
-#         if self.transform:
-#             frame = self.transform(frame)
-#         return frame
+
+class VideoDataloaderDecord(torch.utils.data.Dataset):
+    def __init__(self, video_path, transform=None):
+        self.video_path = video_path
+        self.transform = transform
+        self.total_frames = len(VideoReader(video_path, ctx=cpu(0)))
+
+    def __len__(self):
+        return self.total_frames
+
+    def __getitem__(self, idx):
+        reader = VideoReader(self.video_path, ctx=cpu(0))  # Initialize in each worker
+        frame = reader[idx].asnumpy()
+        if self.transform:
+            frame = self.transform(frame)
+        return frame
 
 
 class MyIterable:
@@ -38,7 +39,6 @@ class MyIterable:
             return item
         else:
             raise StopIteration  # No more items to produce
-
 
 
 class VideoFramesGenerator:
@@ -75,25 +75,6 @@ class VideoFramesGenerator:
             raise StopIteration
 
 
-class VideoDataloaderDecord(torch.utils.data.Dataset):
-    def __init__(self, video_path, transform=None):
-        super().__init__()
-        self.video_path = video_path
-        self.transform = transform
-        self.reader = VideoReader(video_path, ctx=cpu(0))
-        self.total_frames = len(self.reader)
-
-    def __len__(self):
-        return self.total_frames
-
-    def __getitem__(self, idx):
-        frame = self.reader[idx]# Decord provides frame-accurate seeking
-        frame = frame.asnumpy()
-        if self.transform:
-            frame = self.transform(frame)
-        return frame
-
-
 class VideoDataloaderPytorch(torch.utils.data.Dataset):
     def __init__(self, video_path, transform=None):
         super().__init__()
@@ -122,23 +103,6 @@ class VideoDataloaderPytorch(torch.utils.data.Dataset):
 
         # Apply transform and return frame data
         return self.transform(frame["data"])
-
-
-# class VideoDataloaderPytorch(torch.utils.data.Dataset):
-#     def __init__(self, video_path, transform) -> None:
-#         super().__init__()
-#         self.video_path = video_path
-#         self.transform = transform
-#         self.reader = torchvision.io.VideoReader(video_path, "video")
-#
-#     def __len__(self):
-#         return self.reader.container.streams.video[0].frames
-#
-#     def __getitem__(self, idx):
-#         self.reader.seek(idx)
-#         frame = next(self.reader)
-#
-#         return self.transform(frame["data"])
 
 
 class VideoDataloader(torch.utils.data.Dataset):

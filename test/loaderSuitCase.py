@@ -7,10 +7,9 @@ import shutil
 import glob
 import torchvision
 from torch.utils.data import DataLoader
-from src.dataloaders.video_loader import VideoDataloader, VideoDataloaderPytorch, VideoDataloaderDecord, VideoFramesGenerator
+from src.dataloaders.video_loader import VideoDataloader, VideoDataloaderPytorch, VideoDataloaderDecord, \
+    VideoFramesGenerator
 import torch
-from decord import VideoReader
-from decord import cpu
 
 
 class DataloaderSuitCase(unittest.TestCase):
@@ -64,43 +63,17 @@ class DataloaderSuitCase(unittest.TestCase):
         self.assertEqual(saved_images[0], "test_image_0.png")
         self.assertEqual(len(glob.glob(os.path.join(self.test_images_output_path, "*.png"))), 100)
 
-    # def test_get_all_frames_from_video(self):
-    #     video_frame_transform = torchvision.transforms.Compose([
-    #         torchvision.transforms.ToPILImage(),
-    #         torchvision.transforms.Resize((128, 128)),
-    #         torchvision.transforms.ToTensor()
-    #     ])
-    #     loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"],
-    #                                                      "test_sample_2_720p.mp4"),
-    #                              transform=video_frame_transform)
-    #
-    #     data_loader = DataLoader(loader, batch_size=1024, shuffle=False, num_workers=0)
-    #     # data_loader = DataLoader(loader, batch_size=1024, shuffle=False, num_workers=8, multiprocessing_context="fork")
-    #
-    #     batches = []
-    #     frames_count = 0
-    #     for batch in data_loader:
-    #         batches.append(batch)
-    #         frames_count += len(batch)
-    #
-    #     self.assertEqual(batches[0].shape, (1024, 3, 128, 128))
-    #     self.assertEqual(batches[0][0].shape, (3, 128, 128))
-    #     self.assertEqual(frames_count, loader.__len__())
-    #     self.assertTrue(np.sum(np.abs(batches[0][0].numpy() - batches[-1][0].numpy())) > 0)
-
-
-    def test_get_all_frames_from_video(self):
+    def test_get_all_frames_from_video_with_open_cv_backend_data_loader_returns_batch_with_1024_samples(self):
         video_frame_transform = torchvision.transforms.Compose([
             torchvision.transforms.ToPILImage(),
             torchvision.transforms.Resize((128, 128)),
             torchvision.transforms.ToTensor()
         ])
-        loader = VideoDataloaderPytorch(video_path=os.path.join(self.config.get_config["input"]["path"],
+        loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"],
                                                          "test_sample_2_720p.mp4"),
                                  transform=video_frame_transform)
 
         data_loader = DataLoader(loader, batch_size=1024, shuffle=False, num_workers=0)
-        # data_loader = DataLoader(loader, batch_size=1024, shuffle=False, num_workers=8, multiprocessing_context="fork")
 
         batches = []
         frames_count = 0
@@ -113,7 +86,31 @@ class DataloaderSuitCase(unittest.TestCase):
         self.assertEqual(frames_count, loader.__len__())
         self.assertTrue(np.sum(np.abs(batches[0][0].numpy() - batches[-1][0].numpy())) > 0)
 
-    def test_get_all_frames_from_video_custom_loader(self):
+    def test_get_all_frames_from_video_with_pytorch_video_reader_backend_data_loader_returns_batch_with_1024_samples(
+            self):
+        video_frame_transform = torchvision.transforms.Compose([
+            torchvision.transforms.ToPILImage(),
+            torchvision.transforms.Resize((128, 128)),
+            torchvision.transforms.ToTensor()
+        ])
+        loader = VideoDataloaderPytorch(video_path=os.path.join(self.config.get_config["input"]["path"],
+                                                                "test_sample_2_720p.mp4"),
+                                        transform=video_frame_transform)
+
+        data_loader = DataLoader(loader, batch_size=1024, shuffle=False, num_workers=0)
+
+        batches = []
+        frames_count = 0
+        for batch in data_loader:
+            batches.append(batch)
+            frames_count += len(batch)
+
+        self.assertEqual(batches[0].shape, (1024, 3, 128, 128))
+        self.assertEqual(batches[0][0].shape, (3, 128, 128))
+        self.assertEqual(frames_count, loader.__len__())
+        self.assertTrue(np.sum(np.abs(batches[0][0].numpy() - batches[-1][0].numpy())) > 0)
+
+    def test_get_all_frames_from_video_with_decord_backend_data_loader_returns_batch_with_256_samples(self):
         video_frame_transform = torchvision.transforms.Compose([
             torchvision.transforms.ToPILImage(),
             torchvision.transforms.Resize((128, 128)),
@@ -123,8 +120,8 @@ class DataloaderSuitCase(unittest.TestCase):
         batch_size = 256
 
         loader = VideoFramesGenerator(video_path=os.path.join(self.config.get_config["input"]["path"],
-                                                         "test_sample_2_720p.mp4"),
-                                 transform=video_frame_transform,
+                                                              "test_sample_2_720p.mp4"),
+                                      transform=video_frame_transform,
                                       batch_size=batch_size)
 
         batches = []
@@ -136,30 +133,4 @@ class DataloaderSuitCase(unittest.TestCase):
         self.assertEqual(len(batches[0]), batch_size)
         self.assertEqual(batches[0][0].shape, (3, 128, 128))
         self.assertEqual(loader.__len__(), frames_count)
-        self.assertTrue(np.sum(np.abs(batches[0][0].numpy() - batches[-1][0].numpy())) > 0)
-
-    def test_custom_dataloader(self):
-        reader = VideoReader(os.path.join(self.config.get_config["input"]["path"],
-                                                         "test_sample_1_720p.mp4"),
-                             ctx=cpu(0),
-                             num_threads=1)
-
-        batch_size = 256
-
-        video_frame_transform = torchvision.transforms.Compose([
-            torchvision.transforms.ToPILImage(),
-            torchvision.transforms.Resize((128, 128)),
-            torchvision.transforms.ToTensor()
-        ])
-
-        batches = []
-        count = 0
-        for index in range(0, len(reader), batch_size):
-            batch = [video_frame_transform(frame) for frame in reader[index:index + batch_size].asnumpy()]
-            batches.append(batch)
-            count += len(batch)
-
-        self.assertEqual(len(batches[0]), 256)
-        self.assertEqual(batches[0][0].shape, (3, 128, 128))
-        self.assertEqual(len(reader), count)
         self.assertTrue(np.sum(np.abs(batches[0][0].numpy() - batches[-1][0].numpy())) > 0)
