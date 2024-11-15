@@ -7,6 +7,7 @@ from src.callbacks.post_processing import (CallbackInterpolateCoordinates,
                                            CallbackSaveToDisk)
 from src.callbacks.video_render import CallbackRenderVideo
 import os
+import shutil
 
 
 class DataloaderSuitCase(unittest.TestCase):
@@ -17,6 +18,16 @@ class DataloaderSuitCase(unittest.TestCase):
                                  self.config.get_config["input"]["resolution"]["height"])
         self.frame_original_size = (1920, 1080)
         self.coordinate_columns = ["pred_bbox_x1", "pred_bbox_y1", "pred_bbox_x2", "pred_bbox_y2"]
+        self.test_videos_output_path = os.path.join(os.path.dirname(__file__), self.config.get_config["output"]["path"],
+                                                    "videos")
+        self.test_stats_output_path = os.path.join(os.path.dirname(__file__), self.config.get_config["output"]["path"],
+                                                    "stats")
+
+        shutil.rmtree(self.test_videos_output_path, ignore_errors=True)
+        shutil.rmtree(self.test_stats_output_path, ignore_errors=True)
+
+        os.makedirs(self.test_videos_output_path, exist_ok=True)
+        os.makedirs(self.test_stats_output_path, exist_ok=True)
 
     def test_interpolate_coordinates_from_sample_2_coordinates_to_frame_0_from_frame_4(self):
         sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__), "test_data/sample_2_coordinates"
@@ -59,8 +70,7 @@ class DataloaderSuitCase(unittest.TestCase):
                 coordinates_columns=self.coordinate_columns,
                 image_size=(1920, 1080),
                 method="xyxy"),
-            CallbackSaveToDisk(file_path=os.path.join(os.path.dirname(__file__),
-                                                      self.config.get_config["output"]["path"],
+            CallbackSaveToDisk(file_path=os.path.join(self.test_stats_output_path,
                                                       r["video_name"] + "_post_processed.csv"))
         ])
 
@@ -80,8 +90,7 @@ class DataloaderSuitCase(unittest.TestCase):
         sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__),
                                                            "test_data/sample_2_coordinates.csv"))
 
-        render_callback = CallbackRenderVideo(output_video_path=os.path.join(os.path.dirname(__file__),
-                                                                             self.config.get_config["output"]["path"],
+        render_callback = CallbackRenderVideo(output_video_path=os.path.join(self.test_videos_output_path,
                                                                              video_name + ".mp4"),
                                               input_video_path=os.path.join(os.path.dirname(__file__),
                                                                             self.config.get_config["input"]["path"],
@@ -102,8 +111,7 @@ class DataloaderSuitCase(unittest.TestCase):
 
         render_callback(post_processed_coordinates_df)
 
-        self.assertTrue(os.path.exists(os.path.join(os.path.dirname(__file__),
-                                                    self.config.get_config["output"]["path"],
+        self.assertTrue(os.path.exists(os.path.join(self.test_videos_output_path,
                                                     video_name + ".mp4"))
                         )
 
@@ -112,8 +120,7 @@ class DataloaderSuitCase(unittest.TestCase):
         sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__),
                                                            "test_data/sample_1_coordinates.csv"))
 
-        render_callback = CallbackRenderVideo(output_video_path=os.path.join(os.path.dirname(__file__),
-                                                                             self.config.get_config["output"]["path"],
+        render_callback = CallbackRenderVideo(output_video_path=os.path.join(self.test_videos_output_path,
                                                                              video_name + ".mp4"),
                                               input_video_path=os.path.join(os.path.dirname(__file__),
                                                                             self.config.get_config["input"]["path"],
@@ -134,7 +141,6 @@ class DataloaderSuitCase(unittest.TestCase):
 
         render_callback(post_processed_coordinates_df)
 
-        self.assertTrue(os.path.exists(os.path.join(os.path.dirname(__file__),
-                                                    self.config.get_config["output"]["path"],
+        self.assertTrue(os.path.exists(os.path.join(self.test_videos_output_path,
                                                     video_name + ".mp4"))
                         )
