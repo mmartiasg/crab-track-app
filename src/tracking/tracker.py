@@ -35,7 +35,7 @@ def track_object_v2(input_video_path,
 
     video_frame_transform = torchvision.transforms.Compose([
         torchvision.transforms.ToPILImage(),
-        torchvision.transforms.Resize((128, 128)),
+        torchvision.transforms.Resize((256, 256)),
         torchvision.transforms.ToTensor()
     ])
 
