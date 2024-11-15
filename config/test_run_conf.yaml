@@ -8,5 +8,5 @@ input:
   extension: avi
 output:
   export_videos: false
-  path: /tests/results
+  path: /test/results
   disable_progress_bar: true

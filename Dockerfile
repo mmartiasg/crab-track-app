@@ -6,4 +6,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY models models
 COPY config config
 COPY src src
-COPY app/main.py main.py
+COPY main.py main.py
