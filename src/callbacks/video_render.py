@@ -5,7 +5,7 @@ import pandas as pd
 
 
 class CallbackRenderVideo:
-    def __init__(self, output_video_path: str, input_video_path: str, coordinate_columns, bbox_color=(0, 0, 255)):
+    def __init__(self, output_video_path, input_video_path, coordinate_columns, bbox_color=(0, 0, 255)):
         self.cap = cv2.VideoCapture(input_video_path)
 
         # load video

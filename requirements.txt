@@ -1,9 +1,8 @@
+decord == 0.6.0
 numpy == 1.26.4
 opencv-python-headless == 4.10.0.84
-tqdm == 4.66.4
 ultralytics == 8.2.5
 joblib == 1.4.2
-pybboxes == 0.1.6
 lapx == 0.5.9.post1
 onnxruntime == 1.18.1
 onnx == 1.16.1

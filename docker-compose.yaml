@@ -3,7 +3,7 @@ services:
     build: .
     image: crab-track-image:0.1.0
     container_name: crab-track
-    tty: true
+    tty: false
     shm_size: '4g'
     volumes:
       - type: bind
