@@ -4,7 +4,7 @@
 ![Ultralytics](https://img.shields.io/badge/ultralytics-8.2.5-green)
 ![Docker](https://img.shields.io/badge/docker-available-blue)
 [![Python CI/CD](https://github.com/mmartiasg/crab-track-app/actions/workflows/ci.yaml/badge.svg)](https://github.com/mmartiasg/crab-track-app/actions/workflows/ci.yaml)
-![GitHub release (including pre-releases)](https://img.shields.io/github/v/release/user/repo?include_prereleases)
+![GitHub release (including pre-releases)](https://img.shields.io/github/v/release/mmartiasg/crab-track-app?include_prereleases)
 ![Codecov](https://codecov.io/gh/mmartiasg/crab-track-app/branch/main/graph/badge.svg)
 
 
