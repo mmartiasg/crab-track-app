@@ -27,4 +27,4 @@ jobs:
       - name: Run tests
         run: |
           coverage run -m unittest discover tests/
-          coverage report --fail-under=30
+          coverage report --fail-under=80
