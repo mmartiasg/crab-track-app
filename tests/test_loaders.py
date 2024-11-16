@@ -15,8 +15,11 @@ import torch
 class DataloaderSuitCase(unittest.TestCase):
     def setUp(self):
         super(DataloaderSuitCase, self).setUp()
-        self.config = Config(config_file_path="test_run_conf.yaml")
-        self.test_images_output_path = os.path.join(self.config.get_config["output"]["path"], "test_images")
+        self.config = Config(config_file_path=os.path.join(os.path.dirname(__file__),
+                                                           "test_run_conf.yaml"))
+        self.test_images_output_path = os.path.join(os.path.dirname(__file__),
+                                                    self.config.get_config["output"]["path"],
+                                                    "test_images")
         shutil.rmtree(self.test_images_output_path, ignore_errors=True)
         os.makedirs(self.test_images_output_path, exist_ok=True)
 
@@ -26,7 +29,8 @@ class DataloaderSuitCase(unittest.TestCase):
             torchvision.transforms.Resize((128, 128)),
             torchvision.transforms.ToTensor()
         ])
-        loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"],
+        loader = VideoDataloader(video_path=os.path.join(os.path.dirname(__file__),
+                                                         self.config.get_config["input"]["path"],
                                                          "test_sample_1_720p.mp4"),
                                  transform=video_frame_transform)
         frames = []
@@ -46,7 +50,9 @@ class DataloaderSuitCase(unittest.TestCase):
             torchvision.transforms.Resize((128, 128)),
             lambda frame: torch.tensor(np.array(frame), dtype=torch.uint8),
         ])
-        loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"],
+
+        loader = VideoDataloader(video_path=os.path.join(os.path.dirname(__file__),
+                                                         self.config.get_config["input"]["path"],
                                                          "test_sample_1_720p.mp4"),
                                  transform=video_frame_transform)
 
@@ -54,14 +60,21 @@ class DataloaderSuitCase(unittest.TestCase):
 
         for batch in data_loader:
             for index, frame in enumerate(batch):
-                cv2.imwrite(os.path.join(self.test_images_output_path, f"test_image_{index}.png"), frame.numpy())
+                cv2.imwrite(os.path.join(os.path.dirname(__file__),
+                                         self.test_images_output_path,
+                                         f"test_image_{index}.png"),
+                            frame.numpy()
+                            )
             break
 
-        saved_images = os.listdir(self.test_images_output_path)
+        saved_images = os.listdir(os.path.join(os.path.dirname(__file__),
+                                               self.test_images_output_path))
         saved_images.sort()
 
         self.assertEqual(saved_images[0], "test_image_0.png")
-        self.assertEqual(len(glob.glob(os.path.join(self.test_images_output_path, "*.png"))), 100)
+        self.assertEqual(len(glob.glob(os.path.join(os.path.dirname(__file__),
+                                                    self.test_images_output_path,
+                                                    "*.png"))), 100)
 
     def test_get_all_frames_from_video_with_open_cv_backend_data_loader_returns_batch_with_1024_samples(self):
         video_frame_transform = torchvision.transforms.Compose([
@@ -69,7 +82,8 @@ class DataloaderSuitCase(unittest.TestCase):
             torchvision.transforms.Resize((128, 128)),
             torchvision.transforms.ToTensor()
         ])
-        loader = VideoDataloader(video_path=os.path.join(self.config.get_config["input"]["path"],
+        loader = VideoDataloader(video_path=os.path.join(os.path.dirname(__file__),
+                                                         self.config.get_config["input"]["path"],
                                                          "test_sample_2_720p.mp4"),
                                  transform=video_frame_transform)
 
@@ -93,7 +107,8 @@ class DataloaderSuitCase(unittest.TestCase):
             torchvision.transforms.Resize((128, 128)),
             torchvision.transforms.ToTensor()
         ])
-        loader = VideoDataloaderPytorch(video_path=os.path.join(self.config.get_config["input"]["path"],
+        loader = VideoDataloaderPytorch(video_path=os.path.join(os.path.dirname(__file__),
+                                                                self.config.get_config["input"]["path"],
                                                                 "test_sample_2_720p.mp4"),
                                         transform=video_frame_transform)
 
@@ -119,7 +134,8 @@ class DataloaderSuitCase(unittest.TestCase):
 
         batch_size = 256
 
-        loader = VideoFramesGenerator(video_path=os.path.join(self.config.get_config["input"]["path"],
+        loader = VideoFramesGenerator(video_path=os.path.join(os.path.dirname(__file__),
+                                                              self.config.get_config["input"]["path"],
                                                               "test_sample_2_720p.mp4"),
                                       transform=video_frame_transform,
                                       batch_size=batch_size)
