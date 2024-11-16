@@ -13,14 +13,17 @@ import shutil
 class DataloaderSuitCase(unittest.TestCase):
     def setUp(self):
         super(DataloaderSuitCase, self).setUp()
-        self.config = Config(config_file_path=os.path.join(os.path.dirname(__file__), 'test_run_conf.yaml'))
+        self.config = Config(config_file_path=os.path.join(os.path.dirname(__file__),
+                                                           'test_run_conf.yaml'))
         self.video_frame_size = (self.config.get_config["input"]["resolution"]["width"],
                                  self.config.get_config["input"]["resolution"]["height"])
         self.frame_original_size = (1920, 1080)
         self.coordinate_columns = ["pred_bbox_x1", "pred_bbox_y1", "pred_bbox_x2", "pred_bbox_y2"]
-        self.test_videos_output_path = os.path.join(os.path.dirname(__file__), self.config.get_config["output"]["path"],
+        self.test_videos_output_path = os.path.join(os.path.dirname(__file__),
+                                                    self.config.get_config["output"]["path"],
                                                     "videos")
-        self.test_stats_output_path = os.path.join(os.path.dirname(__file__), self.config.get_config["output"]["path"],
+        self.test_stats_output_path = os.path.join(os.path.dirname(__file__),
+                                                    self.config.get_config["output"]["path"],
                                                     "stats")
 
         shutil.rmtree(self.test_videos_output_path, ignore_errors=True)
@@ -30,8 +33,8 @@ class DataloaderSuitCase(unittest.TestCase):
         os.makedirs(self.test_stats_output_path, exist_ok=True)
 
     def test_interpolate_coordinates_from_sample_2_coordinates_to_frame_0_from_frame_4(self):
-        sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__), "test_data/sample_2_coordinates"
-                                                                                      ".csv"))
+        sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__),
+                                                           "test_data/sample_2_coordinates.csv"))
 
         interpolated_callback = CallbackInterpolateCoordinates(coordinates_columns=self.coordinate_columns,
                                                                method="linear")
@@ -42,7 +45,8 @@ class DataloaderSuitCase(unittest.TestCase):
                         interpolated_coordinates_df.iloc[3][self.coordinate_columns]["pred_bbox_x1"])
 
     def test_denormalized_coordinates_from_sample_1_first_frame_is_1064_85_1343_232(self):
-        sample_1_coordinates = pd.read_csv(os.path.join(os.path.dirname(__file__), "test_data/sample_1_coordinates.csv"))
+        sample_1_coordinates = pd.read_csv(os.path.join(os.path.dirname(__file__),
+                                                        "test_data/sample_1_coordinates.csv"))
 
         denormalized_callback = CallbackDenormalizeCoordinates(coordinates_columns=self.coordinate_columns,
                                                                method="xyxy",
@@ -70,7 +74,8 @@ class DataloaderSuitCase(unittest.TestCase):
                 coordinates_columns=self.coordinate_columns,
                 image_size=(1920, 1080),
                 method="xyxy"),
-            CallbackSaveToDisk(file_path=os.path.join(self.test_stats_output_path,
+            CallbackSaveToDisk(file_path=os.path.join(os.path.dirname(__file__),
+                                                      self.test_stats_output_path,
                                                       r["video_name"] + "_post_processed.csv"))
         ])
 

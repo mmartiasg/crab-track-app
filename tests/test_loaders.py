@@ -67,11 +67,14 @@ class DataloaderSuitCase(unittest.TestCase):
                             )
             break
 
-        saved_images = os.listdir(os.path.join(os.path.dirname(__file__), self.test_images_output_path))
+        saved_images = os.listdir(os.path.join(os.path.dirname(__file__),
+                                               self.test_images_output_path))
         saved_images.sort()
 
         self.assertEqual(saved_images[0], "test_image_0.png")
-        self.assertEqual(len(glob.glob(os.path.join(os.path.dirname(__file__), self.test_images_output_path, "*.png"))), 100)
+        self.assertEqual(len(glob.glob(os.path.join(os.path.dirname(__file__),
+                                                    self.test_images_output_path,
+                                                    "*.png"))), 100)
 
     def test_get_all_frames_from_video_with_open_cv_backend_data_loader_returns_batch_with_1024_samples(self):
         video_frame_transform = torchvision.transforms.Compose([
