@@ -22,25 +22,6 @@ class VideoDataloaderDecord(torch.utils.data.Dataset):
         return frame
 
 
-class MyIterable:
-    def __init__(self, items):
-        self.items = items
-        self.index = 0  # Tracks the current position
-
-    def __iter__(self):
-        # The __iter__ method should return the iterator object itself.
-        return self
-
-    def __next__(self):
-        # __next__ should return the next item or raise StopIteration when done.
-        if self.index < len(self.items):
-            item = self.items[self.index]
-            self.index += 1
-            return item
-        else:
-            raise StopIteration  # No more items to produce
-
-
 class VideoFramesGenerator:
     def __init__(self, video_path, transform=None, num_threads=1, batch_size=256):
         super().__init__()
