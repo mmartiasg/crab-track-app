@@ -61,8 +61,11 @@ class DataloaderSuitCase(unittest.TestCase):
 
     def test_compose_callbacks_using_sample_2_returns_denormalized_coordinates_1289_985_1560_1062_saves_csv_file(
             self):
-        sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__),
-                                                           "test_data/sample_2_coordinates.csv"))
+        sample_2_coordinates_df = pd.read_csv(
+                                    os.path.join(
+                                        os.path.dirname(__file__),
+                                        "test_data/sample_2_coordinates.csv")
+                                )
 
         r = {"video_name": "sample_2", "coordinates": sample_2_coordinates_df}
 
@@ -74,9 +77,11 @@ class DataloaderSuitCase(unittest.TestCase):
                 coordinates_columns=self.coordinate_columns,
                 image_size=(1920, 1080),
                 method="xyxy"),
-            CallbackSaveToDisk(file_path=os.path.join(os.path.dirname(__file__),
-                                                      self.test_stats_output_path,
-                                                      r["video_name"] + "_post_processed.csv"))
+            CallbackSaveToDisk(file_path=os.path.join(
+                                    self.test_stats_output_path,
+                                    r["video_name"] + "_post_processed.csv"
+                                )
+            )
         ])
 
         sample_2_post_processed = compose_callback(sample_2_coordinates_df).iloc[0]
@@ -85,10 +90,13 @@ class DataloaderSuitCase(unittest.TestCase):
         self.assertEqual(sample_2_post_processed[self.coordinate_columns[1]], 985)
         self.assertEqual(sample_2_post_processed[self.coordinate_columns[2]], 1560)
         self.assertEqual(sample_2_post_processed[self.coordinate_columns[3]], 1062)
-        self.assertTrue(os.path.exists(os.path.join(os.path.dirname(__file__),
-                                                    self.config.get_config["output"]["path"],
-                                                    r["video_name"] + "_post_processed.csv"))
+        self.assertTrue(os.path.exists(
+                                    os.path.join(
+                                        self.test_stats_output_path,
+                                        r["video_name"] + "_post_processed.csv"
+                                    )
                         )
+        )
 
     def test_export_video_with_boundary_and_path_for_sample_video_2_validate_if_file_exists_true(self):
         video_name = "sample_2_test_video"
