@@ -4,11 +4,8 @@
 ![Ultralytics](https://img.shields.io/badge/ultralytics-8.2.5-green)
 ![Docker](https://img.shields.io/badge/docker-available-blue)
 [![Python CI/CD](https://github.com/mmartiasg/crab-track-app/actions/workflows/ci.yaml/badge.svg)](https://github.com/mmartiasg/crab-track-app/actions/workflows/ci.yaml)
-<<<<<<< HEAD
 ![GitHub release (including pre-releases)](https://img.shields.io/github/v/release/user/repo?include_prereleases)
 ![Coverage Status](https://codecov.io/gh/user/repo/branch/main/graph/badge.svg)
-=======
->>>>>>> main
 
 This Python application uses YOLO (You Only Look Once) from the `ultralytics` library to detect and track crabs in video feeds or images. YOLO is a real-time object detection system, and with the latest advancements in `ultralytics`, we can achieve efficient and accurate detection of crabs for research, environmental monitoring, or other applications.
 
