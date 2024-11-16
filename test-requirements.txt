@@ -7,4 +7,3 @@ joblib == 1.4.2
 lapx == 0.5.9.post1
 onnxruntime == 1.18.1
 onnx == 1.16.1
-coverage == 7.6.7
