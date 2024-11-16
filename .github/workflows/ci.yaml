@@ -21,10 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Create folders for test
-        run: mkdir tests/test_results
+          pip install -r test-requirements.txt
 
       - name: Debug current directory
         run: |
@@ -34,3 +31,9 @@ jobs:
 
       - name: Run tests
         run: python -m unittest discover
+
+      - name: Debug current directory
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Listing files in current directory:"
+          ls -l

@@ -15,8 +15,11 @@ import torch
 class DataloaderSuitCase(unittest.TestCase):
     def setUp(self):
         super(DataloaderSuitCase, self).setUp()
-        self.config = Config(config_file_path=os.path.join(os.path.dirname(__file__), "test_run_conf.yaml"))
-        self.test_images_output_path = os.path.join(os.path.dirname(__file__), self.config.get_config["output"]["path"], "test_images")
+        self.config = Config(config_file_path=os.path.join(os.path.dirname(__file__),
+                                                           "test_run_conf.yaml"))
+        self.test_images_output_path = os.path.join(os.path.dirname(__file__),
+                                                    self.config.get_config["output"]["path"],
+                                                    "test_images")
         shutil.rmtree(self.test_images_output_path, ignore_errors=True)
         os.makedirs(self.test_images_output_path, exist_ok=True)
 
