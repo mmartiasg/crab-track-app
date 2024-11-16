@@ -25,4 +25,12 @@ jobs:
           pip install -r test-requirements.txt
 
       - name: Run tests
-        run: coverage report --fail-under=30
+        run: |
+          coverage run -m unittest discover
+          coverage report --fail-under=80
+          coverage lcov > coverage.lcov
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}  # Make sure this token is set correctly
