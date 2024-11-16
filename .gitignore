@@ -39,14 +39,14 @@ MANIFEST
 .csv
 .mp4
 run_conf.yaml
-test/test_results
+tests/test_results
 .log
 
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit tests / coverage reports
 htmlcov/
 .tox/
 .nox/
