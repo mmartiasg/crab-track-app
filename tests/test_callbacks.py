@@ -156,4 +156,4 @@ class DataloaderSuitCase(unittest.TestCase):
 
         self.assertTrue(os.path.exists(os.path.join(self.test_videos_output_path,
                                                     video_name + ".mp4"))
-                        )
+        )
