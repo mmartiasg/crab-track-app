@@ -1,4 +1,4 @@
-FROM python:3.10.12-slim
+FROM  --platform=linux/x86_64 python:3.10.12-slim
 RUN apt update && apt install -y libgl1 libglib2.0-0
 WORKDIR /app
 COPY requirements.txt requirements.txt
