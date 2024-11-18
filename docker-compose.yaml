@@ -17,4 +17,4 @@ services:
         target: /results
     environment:
       YOLO_VERBOSE: false
-    command: ["python", "main.py", "--config_path=config/run_conf.yaml"]
+    command: ["python", "main.py", "--config_path=config/run_conf_docker.yaml"]

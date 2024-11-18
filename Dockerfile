@@ -4,6 +4,6 @@ WORKDIR /app
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY models models
-COPY config config
+COPY config/run_conf_docker.yaml config/run_conf_docker.yaml
 COPY src src
 COPY app/main.py main.py
