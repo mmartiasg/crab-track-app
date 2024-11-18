@@ -7,13 +7,13 @@ services:
 #    shm_size: '1g'
     volumes:
       - type: bind
-#        source: /home/matias/workspace/datasets/ICMAN-30-Octubre-2022
-        source: /Users/matiasgonzalez/workspace/datasets/sample_dataset_icman
+        source: /home/matias/workspace/datasets/ICMAN-30-Octubre-2022
+#        source: /Users/matiasgonzalez/workspace/datasets/sample_dataset_icman
 #        source: /home/matias/workspace/datasets/sample_dataset_icman
         target: /dataset/samples
       - type: bind
-        source: /Users/matiasgonzalez/crab-track-app/results
-#        source: /home/matias/workspace/crab-track-app/results
+#        source: /Users/matiasgonzalez/crab-track-app/results
+        source: /home/matias/workspace/crab-track-app/results
         target: /results
     environment:
       YOLO_VERBOSE: false
