@@ -58,7 +58,6 @@ def main():
     logging.info(f"List of videos to process: {video_paths}")
 
     with parallel_backend("loky", verbose=100):
-        # TODO: use res to pruduce stats at the end or draw the path traveled in a video.
         res = Parallel(n_jobs=mpt.cpu_count()//4, return_as="generator_unordered")(
             delayed(track_object_v2)(input_video_path=video_path,
                                      out_path=config.get_config["output"]["path"],

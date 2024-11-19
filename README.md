@@ -145,7 +145,7 @@ The important part is the **volumes** section
 To run locally, specify the path to the YAML configuration file:
 
 ```bash
-    python main.py --config_path=config/run_conf.yaml
+    python app/main.py --config_path=config/run_conf.yaml
 ```
 
 ### Docker
