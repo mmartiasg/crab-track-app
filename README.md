@@ -34,6 +34,7 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
 - Adjustable parameters to improve detection accuracy.
 - Missing points are interpolated using the previous and next points.
 - The provided model **0.2.0** has been trained on 30,000 images for one week using a RTX 4070ti.
+- Every release has a docker image in docker hub ready to use.
 
 ## Installation
 
@@ -72,6 +73,10 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
         conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
         nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
         device: # Device cpu, cuda or mps.
+        batch_size: # number of frames to process at the same time.
+        internal_resolution: # subsampling resolution for the model to work with
+          width: # subsampling width
+          height: # subsampling height
       input:
         path: # Absolute path where the videos are located in the current file system.
         extension: mp4 # Video extension.
@@ -105,6 +110,10 @@ Copy the template provided for docker and change the name to **run_conf.yaml**
         conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
         nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
         device: # Device cpu, cuda or mps.
+        batch_size: # number of frames to process at the same time.
+        internal_resolution: # subsampling resolution for the model to work with
+          width: # subsampling width
+          height: # subsampling height
       input:
         path: /dataset/samples # !Do not change this! This is the docker path where the input will be mapped (target)!
         extension: mp4 # Video extension.

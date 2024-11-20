@@ -18,7 +18,7 @@ class DataloaderSuitCase(unittest.TestCase):
         self.video_frame_size = (self.config.get_config["input"]["resolution"]["width"],
                                  self.config.get_config["input"]["resolution"]["height"])
         self.frame_original_size = (1920, 1080)
-        self.coordinate_columns = ["pred_bbox_x1", "pred_bbox_y1", "pred_bbox_x2", "pred_bbox_y2"]
+        self.coordinate_columns = ["x1", "y1", "x2", "y2"]
         self.test_videos_output_path = os.path.join(os.path.dirname(__file__),
                                                     self.config.get_config["output"]["path"],
                                                     "videos")

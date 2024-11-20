@@ -38,24 +38,23 @@ class DataTransform(unittest.TestCase):
         self.assertEqual(len(json_response_batch), 3)
 
         # just the first box
-        self.assertAlmostEqual(round(json_response_batch[0][0]["pred_bbox_x1"], 4), round(256/1080, 4), delta=1e-7)
-        self.assertAlmostEqual(round(json_response_batch[0][0]["pred_bbox_y1"], 4), round(256/1920, 4), delta=1e-7)
-        self.assertAlmostEqual(round(json_response_batch[0][0]["pred_bbox_x2"], 4), round(115/1080, 4), delta=1e-7)
-        self.assertAlmostEqual(round(json_response_batch[0][0]["pred_bbox_y2"], 4), round(250/1920, 4), delta=1e-7)
+        self.assertAlmostEqual(round(json_response_batch[0][0]["x1"], 4), round(256/1080, 4), delta=1e-7)
+        self.assertAlmostEqual(round(json_response_batch[0][0]["y1"], 4), round(256/1920, 4), delta=1e-7)
+        self.assertAlmostEqual(round(json_response_batch[0][0]["x2"], 4), round(115/1080, 4), delta=1e-7)
+        self.assertAlmostEqual(round(json_response_batch[0][0]["y2"], 4), round(250/1920, 4), delta=1e-7)
 
-        self.assertAlmostEqual(round(json_response_batch[1][0]["pred_bbox_x1"], 4), round(256/1080, 4), delta=1e-7)
-        self.assertAlmostEqual(round(json_response_batch[1][0]["pred_bbox_y1"], 4), round(256/1920, 4), delta=1e-7)
-        self.assertAlmostEqual(round(json_response_batch[1][0]["pred_bbox_x2"], 4), round(115/1080, 4), delta=1e-7)
-        self.assertAlmostEqual(round(json_response_batch[1][0]["pred_bbox_y2"], 4), round(250/1920, 4), delta=1e-7)
+        self.assertAlmostEqual(round(json_response_batch[1][0]["x1"], 4), round(256/1080, 4), delta=1e-7)
+        self.assertAlmostEqual(round(json_response_batch[1][0]["y1"], 4), round(256/1920, 4), delta=1e-7)
+        self.assertAlmostEqual(round(json_response_batch[1][0]["x2"], 4), round(115/1080, 4), delta=1e-7)
+        self.assertAlmostEqual(round(json_response_batch[1][0]["y2"], 4), round(250/1920, 4), delta=1e-7)
 
-        self.assertAlmostEqual(json_response_batch[2][0]["pred_bbox_x1"], None)
-        self.assertAlmostEqual(json_response_batch[2][0]["pred_bbox_y1"], None)
-        self.assertAlmostEqual(json_response_batch[2][0]["pred_bbox_x2"], None)
-        self.assertAlmostEqual(json_response_batch[2][0]["pred_bbox_y2"], None)
+        self.assertAlmostEqual(json_response_batch[2][0]["x1"], None)
+        self.assertAlmostEqual(json_response_batch[2][0]["y1"], None)
+        self.assertAlmostEqual(json_response_batch[2][0]["x2"], None)
+        self.assertAlmostEqual(json_response_batch[2][0]["y2"], None)
 
         self.assertAlmostEqual(yolo_adapter_data_transform.inference_time_batch, 5.405731499195099 * 3, delta=1e-8)
         self.assertAlmostEqual(yolo_adapter_data_transform.inference_time_batch / 3,
                                yolo_adapter_data_transform.inference_time_sample, delta=1e-8)
 
         self.assertTrue(yolo_adapter_data_transform.frame_index, 3)
-
