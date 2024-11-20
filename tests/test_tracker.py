@@ -31,10 +31,8 @@ class TestTracker(unittest.TestCase):
         self.test_stats_output_path = os.path.join(os.path.dirname(__file__),
                                                    self.config.get_config["output"]["path"],
                                                    "stats")
-        self.test_logs_output_path = self.test_stats_output_path = os.path.join(os.path.dirname(__file__),
-                                                                                self.config.get_config["output"][
-                                                                                    "path"],
-                                                                                "logs")
+        self.test_logs_output_path = os.path.join(os.path.dirname(__file__), self.config.get_config["output"]["path"],
+                                                  "logs")
         self.frame_original_size = (1920, 1080)
         self.coordinate_columns = ["x1", "y1", "x2", "y2"]
 
