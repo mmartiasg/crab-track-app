@@ -70,7 +70,7 @@ class TrackerByDetection:
         loader = VideoFramesGenerator(video_path=self.input_video_path,
                                       transform=video_frame_transform,
                                       batch_size=self.batch_size,
-                                      num_threads=mpt.cpu_count() // 4)
+                                      num_threads=mpt.cpu_count() // 8)
 
         self.logger.info(f"Video {self.video_name} loaded with frames: {loader.__len__()}")
 

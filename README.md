@@ -20,7 +20,8 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
   - [Docker](#docker)
 - [Usage](#usage)
   - [Local](#local)
-  - [Docker](#docker)
+  - [Local Docker](#local-docker)
+  - [Docker Hub Image](#docker-hub-image)
   - [Console output](#console-output)
 - [Output](#output)
   - [Files](#files)
@@ -157,7 +158,7 @@ To run locally, specify the path to the YAML configuration file:
     python app/main.py --config_path=config/run_conf.yaml
 ```
 
-### Docker
+### Local Docker
 This command builds and runs the Docker image. Once the process is complete, the Docker container will be stopped:
 
 ```bash
@@ -167,6 +168,37 @@ This command builds and runs the Docker image. Once the process is complete, the
 By adding **docker image prune -f** we can clean up all the intermediate images produce by docker:
 ```bash
   docker compose -f docker-compose.yaml up --build && docker image prune -f
+````
+
+### Docker Hub Image
+For each release, a Docker image is automatically created and uploaded to the [Docker Hub Repository](https://hub.docker.com/repository/docker/mmatiasg/crab-track/general). These images are publicly accessible and can be used directly without needing to download the repository code.
+
+To make usage easier, we have also provided a Docker Compose YAML file.
+```yaml
+    services:
+      crab-track:
+        image: mmatiasg/crab-track:v0.1.6-beta # this is the 0.1.6-beta release image
+        container_name: crab-track
+        tty: false
+        volumes:
+          - type: bind
+            source: # Source folder with all the videos
+            target: /dataset/samples
+          - type: bind
+            source: # An existing folder to save the stats and videos 
+            target: /results
+          - type: bind
+            source: # Configuration path with the name run_conf.yaml
+            target: /config
+        environment:
+          YOLO_VERBOSE: false
+        command: ["python", "main.py", "--config_path=config/run_conf.yaml"]
+```
+
+Save the file and run this command in the same directory
+
+```bash
+  docker compose -f docker-compose.yaml up && docker image prune -f
 ````
 
 ## Console output:
@@ -189,20 +221,20 @@ Project
 
 ### Csv data
 
-| Index | pred_bbox_x1 | pred_bbox_y1 | pred_bbox_x2 | pred_bbox_y2 |
-|-------|--------------|--------------|--------------|--------------|
-| 0     | 1311         | 985          | 1526         | 1073         |
-| 1     | 1312         | 983          | 1528         | 1072         |
-| 2     | 1312         | 984          | 1526         | 1074         |
-| 3     | 1313         | 982          | 1528         | 1072         |
-| 4     | 1313         | 982          | 1528         | 1071         |
-| 5     | 1312         | 983          | 1527         | 1073         |
-| 6     | 1310         | 985          | 1525         | 1075         |
+| Index | x1   | y1  | x2   | y2   |
+|-------|------|-----|------|------|
+| 0     | 1311 | 985 | 1526 | 1073 |
+| 1     | 1312 | 983 | 1528 | 1072 |
+| 2     | 1312 | 984 | 1526 | 1074 |
+| 3     | 1313 | 982 | 1528 | 1072 |
+| 4     | 1313 | 982 | 1528 | 1071 |
+| 5     | 1312 | 983 | 1527 | 1073 |
+| 6     | 1310 | 985 | 1525 | 1075 |
 
 **Column Descriptions:**
 - **Index**: The nth frame in the sequence.
-- **pred_bbox_x1** and **pred_bbox_y1**: Upper-left corner coordinates of the bounding box.
-- **pred_bbox_x2** and **pred_bbox_y2**: Lower-right corner coordinates of the bounding box.
+- **x1** and **y1**: Upper-left corner coordinates of the bounding box.
+- **x2** and **y2**: Lower-right corner coordinates of the bounding box.
 
 ### Logs
 The script will output logs for the whole process and one per video

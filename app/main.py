@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import os
-from src.tracking.tracker import track_object_v2
 from src.transforms.Adapter import YoloAdapter
 from src.utils.constants import Config
 from joblib import Parallel, delayed, parallel_backend
