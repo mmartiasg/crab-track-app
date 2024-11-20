@@ -41,8 +41,8 @@ class DataloaderSuitCase(unittest.TestCase):
 
         interpolated_coordinates_df = interpolated_callback(sample_2_coordinates_df)
 
-        self.assertTrue(interpolated_coordinates_df.iloc[0][self.coordinate_columns]["pred_bbox_x1"],
-                        interpolated_coordinates_df.iloc[3][self.coordinate_columns]["pred_bbox_x1"])
+        self.assertTrue(interpolated_coordinates_df.iloc[0][self.coordinate_columns]["x1"],
+                        interpolated_coordinates_df.iloc[3][self.coordinate_columns]["x1"])
 
     def test_denormalized_coordinates_from_sample_1_first_frame_is_1064_85_1343_232(self):
         sample_1_coordinates = pd.read_csv(os.path.join(os.path.dirname(__file__),
