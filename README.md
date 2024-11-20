@@ -195,8 +195,7 @@ To make usage easier, we have also provided a Docker Compose YAML file.
         command: ["python", "main.py", "--config_path=config/run_conf.yaml"]
 ```
 
-Save the file and run this command in the same directory
-
+Save the file and run this command in the same directory:
 ```bash
   docker compose -f docker-compose.yaml up && docker image prune -f
 ````
