@@ -205,7 +205,7 @@ To make usage easier, we have also provided a Docker Compose YAML file.
 ```
 💡**Note:** The key difference is that we cannot copy the configuration file directly, as we don’t know which specific configuration you’d like to use. Since Docker relies on absolute paths, you'll need to map the configuration directory to a specific path, such as /config.
 
-To help you get started, there's a template available in the repository: docker-hub-docker-compose.yaml.
+To help you get started, there's a template available in the repository: **docker-hub-docker-compose.yaml**.
 
 After making the necessary modifications to the source for the bindings and the release image you would like to use, execute the following command:
 ```bash
