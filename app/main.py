@@ -33,7 +33,7 @@ def create_job(video_path, config):
                                                   video_name + "_post_processed.csv"))
     ]
 
-    if video_name == "1_crop" or video_name == "12_crop" or video_name == "8_sample" or video_name == "snipped_1" or video_name == "12":
+    if video_name == "1_crop" or video_name == "12_crop" or video_name == "8_sample" or video_name == "12":
         render_callback = CallbackRenderVideo(
             output_video_path=os.path.join(config.get_config["output"]["path"],
                                            "videos",

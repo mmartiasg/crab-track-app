@@ -3,6 +3,10 @@ model:
   conf_threshold: 0.8
   nms_threshold: 0.5
   device: cpu
+  batch_size: 128
+  internal_resolution:
+    width: 256
+    height: 256
 input:
   path: /home/datasets/videos
   extension: mp4

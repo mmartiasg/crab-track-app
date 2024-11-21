@@ -192,12 +192,15 @@ To make usage easier, we have also provided a Docker Compose YAML file.
             target: /config
         environment:
           YOLO_VERBOSE: false
-        command: ["python", "main.py", "--config_path=config/run_conf.yaml"]
+        command: ["python", "main.py", "--config_path=/config/run_conf.yaml"]
 ```
+💡**Note:** The key difference is that we cannot copy the configuration file directly, as we don’t know which specific configuration you’d like to use. Since Docker relies on absolute paths, you'll need to map the configuration directory to a specific path, such as /config.
 
-Save the file and run this command in the same directory:
+To help you get started, there's a template available in the repository: docker-hub-docker-compose.yaml.
+
+After making the necessary modifications to the source for the bindings and the release image you would like to use, execute the following command:
 ```bash
-  docker compose -f docker-compose.yaml up && docker image prune -f
+  docker compose -f docker-hub-docker-compose.yaml up && docker image prune -f
 ````
 
 ## Console output:
