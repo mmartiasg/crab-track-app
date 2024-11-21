@@ -5,7 +5,6 @@ from src.transforms.Adapter import YoloAdapter
 from src.utils.constants import Config
 from joblib import Parallel, delayed, parallel_backend
 import glob
-import multiprocessing as mpt
 import logging
 from src.callbacks.compose import ComposeCallback
 from src.callbacks.post_processing import CallbackDenormalizeCoordinates, CallbackInterpolateCoordinates, \
