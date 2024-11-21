@@ -3,6 +3,8 @@ model:
   conf_threshold: 0.8
   nms_threshold: 0.5
   device: cpu
+#  detection, byte_track
+  algorithm: detection
   batch_size: 256
   internal_resolution:
     width: 256
@@ -15,3 +17,6 @@ input:
     width: 1280
 output:
   path: test_results
+multiprocess:
+  cpu_videos: 4
+  cpu_per_video: 2

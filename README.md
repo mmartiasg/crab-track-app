@@ -35,7 +35,8 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
 - Adjustable parameters to improve detection accuracy.
 - Missing points are interpolated using the previous and next points.
 - The provided model **0.2.0** has been trained on 30,000 images for one week using a RTX 4070ti.
-- Every release has a docker image in docker hub ready to use.
+- Every release has a docker image in [Docker Hub](https://hub.docker.com/repository/docker/mmatiasg/crab-track/general) from 0.1.6-beta.
+- Several tracking algorithms to choose from.  
 
 ## Installation
 
@@ -74,6 +75,7 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
         conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
         nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
         device: # Device cpu, cuda or mps.
+        algorithm: # detection or byte_track
         batch_size: # number of frames to process at the same time.
         internal_resolution: # subsampling resolution for the model to work with
           width: # subsampling width
@@ -86,6 +88,9 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
         height: 1080
       output:
         path: # Absolute path where the results will be saved in the current file system.
+     multiprocess:
+       simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
+       threads_per_video: 2 # Number of CPUs allocated to process each video
    ```
 
 ### Docker
@@ -111,6 +116,7 @@ Copy the template provided for docker and change the name to **run_conf.yaml**
         conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
         nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
         device: # Device cpu, cuda or mps.
+        algorithm: # detection or byte_track
         batch_size: # number of frames to process at the same time.
         internal_resolution: # subsampling resolution for the model to work with
           width: # subsampling width
@@ -123,6 +129,9 @@ Copy the template provided for docker and change the name to **run_conf.yaml**
         height: 1080
       output:
         path: # Absolute path where the results will be saved in the current file system.
+     multiprocess:
+       simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
+       threads_per_video: 2 # Number of CPUs allocated to process each video
    ```
 
    💡**Hint:** We've provided a sample template for each case in the **config** folder to help you get started. A base model is also available in the models folder: the **ONNX** version is already optimized for fast **CPU inference**, while the .pt file is the unoptimized raw model from PyTorch.
@@ -221,7 +230,7 @@ Project
         |-- 1.mp4
 ```
 
-### Csv data
+### Csv data (denormalized)
 
 | Index | x1   | y1  | x2   | y2   |
 |-------|------|-----|------|------|

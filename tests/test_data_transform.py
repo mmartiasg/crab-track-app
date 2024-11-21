@@ -1,8 +1,12 @@
 import unittest
+
+import decord.ndarray
+
 from src.transforms.Adapter import YoloAdapter
 from ultralytics.engine.results import Results
 import numpy as np
 import torch
+from src.transforms.Input import NDArrayToTensor, NDArrayToImage
 
 
 class DataTransform(unittest.TestCase):
@@ -58,3 +62,26 @@ class DataTransform(unittest.TestCase):
                                yolo_adapter_data_transform.inference_time_sample, delta=1e-8)
 
         self.assertTrue(yolo_adapter_data_transform.frame_index, 3)
+
+    def test_transform_3_frames_of_1920_1080_into_128_128_tensors(self):
+        ndarray_to_tensor = NDArrayToTensor(size=(128, 128))
+
+        decord_array = decord.ndarray.array(np.zeros((3, 1920, 1080, 3)))
+
+        tensors = ndarray_to_tensor(decord_array)
+
+        self.assertTrue(isinstance(tensors, torch.Tensor))
+        self.assertTrue(tensors.shape == (3, 3, 128, 128))
+
+    def test_transform_3_frames_of_1920_1080_into_128_128_list_of_numpy_arrays_uint8(self):
+        ndarray_to_image = NDArrayToImage(size=(128, 128))
+
+        decord_array = decord.ndarray.array(np.zeros((3, 1920, 1080, 3)))
+
+        list_of_images = ndarray_to_image(decord_array)
+
+        self.assertTrue(isinstance(list_of_images, list))
+        self.assertTrue(len(list_of_images) == 3)
+        self.assertTrue(list_of_images[0].shape == (128, 128, 3))
+        self.assertTrue(list_of_images[1].shape == (128, 128, 3))
+        self.assertTrue(list_of_images[2].shape == (128, 128, 3))

@@ -6,6 +6,7 @@ import logging
 import os
 import itertools
 import pandas as pd
+from src.transforms.Input import NDArrayToTensor, NDArrayToImage
 
 
 def setup_logging(log_dir, video_name):
@@ -31,7 +32,7 @@ def flatten_list(list_of_lists):
     return list(itertools.chain.from_iterable(list_of_lists))
 
 
-class TrackerByDetection:
+class BaseTracker:
     def __init__(self,
                  input_video_path,
                  batch_size,
@@ -41,41 +42,34 @@ class TrackerByDetection:
                  model_weights,
                  response_transform,
                  internal_resolution,
-                 log_dir):
+                 log_dir,
+                 threads_per_video=1):
 
         self.input_video_path = input_video_path
         self.batch_size = batch_size
         self.confidence_threshold = confidence_threshold
         self.nms_threshold = nms_threshold
         self.device = device
+        self.threads_per_video = threads_per_video
         self.model = YOLO(model_weights, task="detect", verbose=False)
         self.response_transform = response_transform
         self.video_name = input_video_path.split("/")[-1].split(".")[0]
         self.internal_resolution = internal_resolution
         self.logger = setup_logging(log_dir=log_dir, video_name=self.video_name)
+        self.loader = self.set_up_video_loader()
 
     def predict_step(self, batch):
-        return self.transform_data_response(self.model.predict(batch))
+        raise NotImplementedError("Implement in subclass")
+
+    def set_up_video_loader(self):
+        raise NotImplementedError("Implement in subclass")
 
     def track_video(self, callbacks=None):
         if callbacks is None:
             callbacks = []
 
-        video_frame_transform = torchvision.transforms.Compose([
-            torchvision.transforms.ToPILImage(),
-            torchvision.transforms.Resize(self.internal_resolution),
-            torchvision.transforms.ToTensor()
-        ])
-
-        loader = VideoFramesGenerator(video_path=self.input_video_path,
-                                      transform=video_frame_transform,
-                                      batch_size=self.batch_size,
-                                      num_threads=mpt.cpu_count() // 8)
-
-        self.logger.info(f"Video {self.video_name} loaded with frames: {loader.__len__()}")
-
         predictions = []
-        for batch in loader:
+        for batch in self.loader:
             pred = self.predict_step(batch)
             predictions.extend(pred)
             self.logger.debug(f"""
@@ -121,3 +115,31 @@ class TrackerByDetection:
             handler.close()
             self.logger.removeHandler(handler)
             del handler
+
+
+class TrackerByDetection(BaseTracker):
+    def predict_step(self, batch):
+        return self.transform_data_response(self.model.predict(batch, stream=True))
+
+    def set_up_video_loader(self):
+        video_frame_transform = NDArrayToTensor(self.internal_resolution)
+        loader = VideoFramesGenerator(video_path=self.input_video_path,
+                                      transform=video_frame_transform,
+                                      batch_size=self.batch_size,
+                                      num_threads=self.threads_per_video)
+        self.logger.info(f"Video {self.video_name} loaded with frames: {loader.__len__()}")
+        return loader
+
+
+class TrackerByByteTrack(BaseTracker):
+    def predict_step(self, batch):
+        return self.transform_data_response(self.model.track(batch, stream=True, persist=True))
+
+    def set_up_video_loader(self):
+        video_frame_transform = NDArrayToImage(self.internal_resolution)
+        loader = VideoFramesGenerator(video_path=self.input_video_path,
+                                      transform=video_frame_transform,
+                                      batch_size=self.batch_size,
+                                      num_threads=self.threads_per_video)
+        self.logger.info(f"Video {self.video_name} loaded with frames: {loader.__len__()}")
+        return loader

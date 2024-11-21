@@ -7,8 +7,8 @@ import shutil
 import glob
 import torchvision
 from torch.utils.data import DataLoader
-from src.dataloaders.video_loader import VideoDataloader, VideoDataloaderPytorch, VideoDataloaderDecord, \
-    VideoFramesGenerator
+from src.dataloaders.video_loader import VideoDataloader, VideoDataloaderPytorch, VideoFramesGenerator
+from src.transforms.Input import NDArrayToTensor
 import torch
 
 
@@ -126,11 +126,7 @@ class DataloaderSuitCase(unittest.TestCase):
         self.assertTrue(np.sum(np.abs(batches[0][0].numpy() - batches[-1][0].numpy())) > 0)
 
     def test_get_all_frames_from_video_with_decord_backend_data_loader_returns_batch_with_256_samples(self):
-        video_frame_transform = torchvision.transforms.Compose([
-            torchvision.transforms.ToPILImage(),
-            torchvision.transforms.Resize((128, 128)),
-            torchvision.transforms.ToTensor()
-        ])
+        video_frame_transform = NDArrayToTensor(size=(128, 128))
 
         batch_size = 256
 

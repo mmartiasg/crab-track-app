@@ -15,8 +15,8 @@ from src.transforms.Adapter import YoloAdapter, DefaultAdapter
 from unittest.mock import patch, MagicMock
 
 class TestTracker(unittest.TestCase):
-
-    def setUp(self):
+    @patch("src.tracking.yolo.VideoFramesGenerator")
+    def setUp(self, video_frames_generator_mock_class):
         super(TestTracker, self).setUp()
 
         self.config = Config(config_file_path=os.path.join(os.path.dirname(__file__),
@@ -41,6 +41,12 @@ class TestTracker(unittest.TestCase):
         self.test_video_1_path = os.path.join(os.path.dirname(__file__),
                                               self.config.get_config["input"]["path"],
                                               "test_sample_1_720p.mp4")
+
+        # VideoFramesGenerator is a generator iter returns self but in this case I have to return the same as next
+        video_frames_generator_mock_instance = video_frames_generator_mock_class.return_value
+        video_frames_generator_mock_instance.__next__.return_value = np.zeros((3, 3, 256, 256))
+        video_frames_generator_mock_instance.__len__.return_value = 3
+        video_frames_generator_mock_instance.__iter__.return_value = np.zeros((3, 3, 256, 256))
 
         self.tracker = TrackerByDetection(input_video_path=self.test_video_1_path,
                                           batch_size=self.config.get_config["model"]["batch_size"],

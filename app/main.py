@@ -11,14 +11,23 @@ from src.callbacks.compose import ComposeCallback
 from src.callbacks.post_processing import CallbackDenormalizeCoordinates, CallbackInterpolateCoordinates, \
     CallbackSaveToDisk
 from src.callbacks.video_render import CallbackRenderVideo
-from src.tracking.yolo import TrackerByDetection
+from src.tracking.yolo import TrackerByDetection, TrackerByByteTrack
+TRACKER_CLASSES = {
+    "detection": TrackerByDetection,
+    "byte_track": TrackerByByteTrack
+}
 
 
 def create_job(video_path, config):
     video_name = video_path.split("/")[-1].split(".")[0]
 
-    coordinates_columns = ["x1", "y1", "x2", "y2"]
+    # Get the tracker algorithm from the configuration
+    algorithm_name = config.get_config["model"]["algorithm"]
+    tracker_class = TRACKER_CLASSES.get(algorithm_name)
+    if tracker_class is None:
+        raise ModuleNotFoundError(f"No tracker found for algorithm '{algorithm_name}'. Available options: {list(TRACKER_CLASSES.keys())}")
 
+    coordinates_columns = ["x1", "y1", "x2", "y2"]
     callback_list = [
         CallbackInterpolateCoordinates(
             coordinates_columns=coordinates_columns,
@@ -50,13 +59,14 @@ def create_job(video_path, config):
                                                                        video_name + ".csv"))
     callbacks = [compose_callback, save_raw_data_callback]
 
-    tracker = TrackerByDetection(input_video_path=video_path,
+    tracker = tracker_class(input_video_path=video_path,
                                  log_dir=config.get_config["output"]["path"],
                                  # keep the name of the video
                                  batch_size=config.get_config["model"]["batch_size"],
                                  confidence_threshold=config.get_config["model"]["conf_threshold"],
                                  nms_threshold=config.get_config["model"]["nms_threshold"],
                                  device=config.get_config["model"]["device"],
+                                 threads_per_video=config.get_config["multiprocess"]["threads_per_video"],
                                  internal_resolution=(config.get_config["model"]["internal_resolution"]["height"],
                                                       config.get_config["model"]["internal_resolution"]["width"]),
                                  model_weights=config.get_config["model"]["path"],
@@ -113,7 +123,7 @@ def main():
 
     # Use joblib to process videos, creating objects on demand
     with parallel_backend("loky", verbose=100):
-        Parallel(n_jobs=mpt.cpu_count() // 4)(
+        Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
             (delayed(create_job)(video_path, config) for video_path in video_paths)
         )
 
