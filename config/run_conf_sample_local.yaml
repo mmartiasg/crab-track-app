@@ -3,6 +3,12 @@ model:
   conf_threshold: 0.8
   nms_threshold: 0.5
   device: cpu
+#  detection, byte_track
+  algorithm: detection
+  batch_size: 128
+  internal_resolution:
+    width: 256
+    height: 256
 input:
   path: /home/datasets/videos
   extension: mp4
@@ -11,3 +17,6 @@ input:
     height: 1080
 output:
   path: /home/results
+multiprocess:
+  simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
+  threads_per_video: 2 # Number of CPUs allocated to process each video

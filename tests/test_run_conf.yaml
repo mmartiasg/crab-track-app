@@ -1,8 +1,14 @@
 model:
-  path: models/0.2.0/tracking.onnx
+  path: yolov8n.yaml
   conf_threshold: 0.8
   nms_threshold: 0.5
   device: cpu
+#  detection, byte_track
+  algorithm: detection
+  batch_size: 256
+  internal_resolution:
+    width: 256
+    height: 256
 input:
   path: test_data
   extension: mp4
@@ -11,3 +17,6 @@ input:
     width: 1280
 output:
   path: test_results
+multiprocess:
+  cpu_videos: 4
+  cpu_per_video: 2
