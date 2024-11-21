@@ -1,7 +1,6 @@
 services:
   crab-track:
-    build: .
-    image: crab-track-image:0.1.0
+    image: mmatiasg/crab-track:v0.1.6-beta
     container_name: crab-track
     tty: false
     volumes:
@@ -11,6 +10,9 @@ services:
       - type: bind
         source: /home/matias/workspace/crab-track-app/results
         target: /results
+      - type: bind
+        source: /home/matias/workspace/crab-track-app/config
+        target: /config
     environment:
       YOLO_VERBOSE: false
-    command: ["python", "main.py", "--config_path=config/run_conf.yaml"]
+    command: ["python", "main.py", "--config_path=/config/run_conf.yaml"]

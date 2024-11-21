@@ -1,4 +1,4 @@
-dataset,tracker,video,frame,inference_time,pred_bbox_x1,pred_bbox_y1,pred_bbox_x2,pred_bbox_y2
+dataset,tracker,video,frame,inference_time,x1,y1,x2,y2
 ICMAN3OCT2022,version_0.2.0,5_micro,0,0.46847570047248155,,,,
 ICMAN3OCT2022,version_0.2.0,5_micro,1,0.46847570047248155,,,,
 ICMAN3OCT2022,version_0.2.0,5_micro,2,0.46847570047248155,,,,

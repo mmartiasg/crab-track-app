@@ -15,7 +15,7 @@ class VideoDataloaderDecord(torch.utils.data.Dataset):
         return self.total_frames
 
     def __getitem__(self, idx):
-        reader = VideoReader(self.video_path, ctx=cpu(0))  # Initialize in each worker
+        reader = VideoReader(self.video_path, ctx=cpu(0))  # Initialize in each worker 0 is any cpu.
         frame = reader[idx].asnumpy()
         if self.transform:
             frame = self.transform(frame)
@@ -26,7 +26,7 @@ class VideoFramesGenerator:
     def __init__(self, video_path, transform=None, num_threads=1, batch_size=256):
         super().__init__()
         self.video_path = video_path
-        self.transform = transform
+        self.transform = transform or (lambda x: x)
         self.num_threads = num_threads
         self.batch_size = batch_size
         self.length = len(VideoReader(video_path, ctx=cpu(0), num_threads=num_threads))
@@ -45,13 +45,7 @@ class VideoFramesGenerator:
             frames = reader[self.index: self.index + self.batch_size]
             self.index += self.batch_size
 
-            # Convert frames to numpy and apply the transformation
-            if self.transform:
-                batch = [self.transform(frame) for frame in frames.asnumpy()]
-                return torch.stack(batch)
-
-            # return frames.asnumpy() #(torch.tensor(frames.asnumpy())/255.).transpose(1, 3)
-            return [cv2.resize(frame, (256, 256)) for frame in frames.asnumpy()]
+            return self.transform(frames)
         else:
             raise StopIteration
 

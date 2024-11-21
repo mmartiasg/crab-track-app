@@ -3,10 +3,11 @@
 ![Python 3.10](https://img.shields.io/badge/python-3.10-green)
 ![Ultralytics](https://img.shields.io/badge/ultralytics-8.2.5-green)
 ![Docker](https://img.shields.io/badge/docker-available-blue)
-[![Python CI/CD](https://github.com/mmartiasg/crab-track-app/actions/workflows/ci.yaml/badge.svg)](https://github.com/mmartiasg/crab-track-app/actions/workflows/ci.yaml)
+[![CI](https://github.com/mmartiasg/crab-track-app/actions/workflows/ci.yaml/badge.svg)](https://github.com/mmartiasg/crab-track-app/actions/workflows/ci.yaml)
+[![CD](https://github.com/mmartiasg/crab-track-app/actions/workflows/cd.yaml/badge.svg)](https://github.com/mmartiasg/crab-track-app/actions/workflows/cd.yaml)
 ![GitHub release (including pre-releases)](https://img.shields.io/github/v/release/mmartiasg/crab-track-app?include_prereleases)
 ![Codecov](https://codecov.io/gh/mmartiasg/crab-track-app/branch/main/graph/badge.svg)
-
+[![Docker Image Version](https://img.shields.io/docker/v/mmatiasg/crab-track?label=Docker%20Image%20Version)](https://hub.docker.com/repository/docker/mmatiasg/crab-track/general)
 
 This Python application uses YOLO (You Only Look Once) from the `ultralytics` library to detect and track crabs in video feeds or images. YOLO is a real-time object detection system, and with the latest advancements in `ultralytics`, we can achieve efficient and accurate detection of crabs for research, environmental monitoring, or other applications.
 
@@ -19,7 +20,8 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
   - [Docker](#docker)
 - [Usage](#usage)
   - [Local](#local)
-  - [Docker](#docker)
+  - [Local Docker](#local-docker)
+  - [Docker Hub Image](#docker-hub-image)
   - [Console output](#console-output)
 - [Output](#output)
   - [Files](#files)
@@ -33,6 +35,8 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
 - Adjustable parameters to improve detection accuracy.
 - Missing points are interpolated using the previous and next points.
 - The provided model **0.2.0** has been trained on 30,000 images for one week using a RTX 4070ti.
+- Every release has a docker image in [Docker Hub](https://hub.docker.com/repository/docker/mmatiasg/crab-track/general).
+- Several tracking algorithms to choose from.  
 
 ## Installation
 
@@ -71,6 +75,11 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
         conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
         nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
         device: # Device cpu, cuda or mps.
+        algorithm: # detection or byte_track
+        batch_size: # number of frames to process at the same time.
+        internal_resolution: # subsampling resolution for the model to work with
+          width: # subsampling width
+          height: # subsampling height
       input:
         path: # Absolute path where the videos are located in the current file system.
         extension: mp4 # Video extension.
@@ -79,6 +88,9 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
         height: 1080
       output:
         path: # Absolute path where the results will be saved in the current file system.
+     multiprocess:
+       simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
+       threads_per_video: 2 # Number of CPUs allocated to process each video
    ```
 
 ### Docker
@@ -104,6 +116,11 @@ Copy the template provided for docker and change the name to **run_conf.yaml**
         conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
         nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
         device: # Device cpu, cuda or mps.
+        algorithm: # detection or byte_track
+        batch_size: # number of frames to process at the same time.
+        internal_resolution: # subsampling resolution for the model to work with
+          width: # subsampling width
+          height: # subsampling height
       input:
         path: /dataset/samples # !Do not change this! This is the docker path where the input will be mapped (target)!
         extension: mp4 # Video extension.
@@ -112,6 +129,9 @@ Copy the template provided for docker and change the name to **run_conf.yaml**
         height: 1080
       output:
         path: # Absolute path where the results will be saved in the current file system.
+     multiprocess:
+       simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
+       threads_per_video: 2 # Number of CPUs allocated to process each video
    ```
 
    💡**Hint:** We've provided a sample template for each case in the **config** folder to help you get started. A base model is also available in the models folder: the **ONNX** version is already optimized for fast **CPU inference**, while the .pt file is the unoptimized raw model from PyTorch.
@@ -144,10 +164,10 @@ The important part is the **volumes** section
 To run locally, specify the path to the YAML configuration file:
 
 ```bash
-    python main.py --config_path=config/run_conf.yaml
+    python app/main.py --config_path=config/run_conf.yaml
 ```
 
-### Docker
+### Local Docker
 This command builds and runs the Docker image. Once the process is complete, the Docker container will be stopped:
 
 ```bash
@@ -157,6 +177,39 @@ This command builds and runs the Docker image. Once the process is complete, the
 By adding **docker image prune -f** we can clean up all the intermediate images produce by docker:
 ```bash
   docker compose -f docker-compose.yaml up --build && docker image prune -f
+````
+
+### Docker Hub Image
+For each release, a Docker image is automatically created and uploaded to the [Docker Hub Repository](https://hub.docker.com/repository/docker/mmatiasg/crab-track/general). These images are publicly accessible and can be used directly without needing to download the repository code.
+
+To make usage easier, we have also provided a Docker Compose YAML file.
+```yaml
+    services:
+      crab-track:
+        image: mmatiasg/crab-track:v0.1.6-beta # this is the 0.1.6-beta release image
+        container_name: crab-track
+        tty: false
+        volumes:
+          - type: bind
+            source: # Source folder with all the videos
+            target: /dataset/samples
+          - type: bind
+            source: # An existing folder to save the stats and videos 
+            target: /results
+          - type: bind
+            source: # Configuration path with the name run_conf.yaml
+            target: /config
+        environment:
+          YOLO_VERBOSE: false
+        command: ["python", "main.py", "--config_path=/config/run_conf.yaml"]
+```
+💡**Note:** The key difference is that we cannot copy the configuration file directly, as we don’t know which specific configuration you’d like to use. Since Docker relies on absolute paths, you'll need to map the configuration directory to a specific path, such as /config.
+
+To help you get started, there's a template available in the repository: **docker-hub-docker-compose.yaml**.
+
+After making the necessary modifications to the source for the bindings and the release image you would like to use, execute the following command:
+```bash
+  docker compose -f docker-hub-docker-compose.yaml up && docker image prune -f
 ````
 
 ## Console output:
@@ -177,22 +230,22 @@ Project
         |-- 1.mp4
 ```
 
-### Csv data
+### Csv data (denormalized)
 
-| Index | pred_bbox_x1 | pred_bbox_y1 | pred_bbox_x2 | pred_bbox_y2 |
-|-------|--------------|--------------|--------------|--------------|
-| 0     | 1311         | 985          | 1526         | 1073         |
-| 1     | 1312         | 983          | 1528         | 1072         |
-| 2     | 1312         | 984          | 1526         | 1074         |
-| 3     | 1313         | 982          | 1528         | 1072         |
-| 4     | 1313         | 982          | 1528         | 1071         |
-| 5     | 1312         | 983          | 1527         | 1073         |
-| 6     | 1310         | 985          | 1525         | 1075         |
+| Index | x1   | y1  | x2   | y2   |
+|-------|------|-----|------|------|
+| 0     | 1311 | 985 | 1526 | 1073 |
+| 1     | 1312 | 983 | 1528 | 1072 |
+| 2     | 1312 | 984 | 1526 | 1074 |
+| 3     | 1313 | 982 | 1528 | 1072 |
+| 4     | 1313 | 982 | 1528 | 1071 |
+| 5     | 1312 | 983 | 1527 | 1073 |
+| 6     | 1310 | 985 | 1525 | 1075 |
 
 **Column Descriptions:**
 - **Index**: The nth frame in the sequence.
-- **pred_bbox_x1** and **pred_bbox_y1**: Upper-left corner coordinates of the bounding box.
-- **pred_bbox_x2** and **pred_bbox_y2**: Lower-right corner coordinates of the bounding box.
+- **x1** and **y1**: Upper-left corner coordinates of the bounding box.
+- **x2** and **y2**: Lower-right corner coordinates of the bounding box.
 
 ### Logs
 The script will output logs for the whole process and one per video

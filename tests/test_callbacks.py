@@ -18,7 +18,7 @@ class DataloaderSuitCase(unittest.TestCase):
         self.video_frame_size = (self.config.get_config["input"]["resolution"]["width"],
                                  self.config.get_config["input"]["resolution"]["height"])
         self.frame_original_size = (1920, 1080)
-        self.coordinate_columns = ["pred_bbox_x1", "pred_bbox_y1", "pred_bbox_x2", "pred_bbox_y2"]
+        self.coordinate_columns = ["x1", "y1", "x2", "y2"]
         self.test_videos_output_path = os.path.join(os.path.dirname(__file__),
                                                     self.config.get_config["output"]["path"],
                                                     "videos")
@@ -41,8 +41,8 @@ class DataloaderSuitCase(unittest.TestCase):
 
         interpolated_coordinates_df = interpolated_callback(sample_2_coordinates_df)
 
-        self.assertTrue(interpolated_coordinates_df.iloc[0][self.coordinate_columns]["pred_bbox_x1"],
-                        interpolated_coordinates_df.iloc[3][self.coordinate_columns]["pred_bbox_x1"])
+        self.assertTrue(interpolated_coordinates_df.iloc[0][self.coordinate_columns]["x1"],
+                        interpolated_coordinates_df.iloc[3][self.coordinate_columns]["x1"])
 
     def test_denormalized_coordinates_from_sample_1_first_frame_is_1064_85_1343_232(self):
         sample_1_coordinates = pd.read_csv(os.path.join(os.path.dirname(__file__),
