@@ -38,7 +38,7 @@ class DataloaderSuitCase(unittest.TestCase):
 
         interpolated_callback = CallbackInterpolateCoordinates(coordinates_columns=self.coordinate_columns,
                                                                method="linear",
-                                                               max_distance=50)
+                                                               max_distance=25)
 
         interpolated_coordinates_df = interpolated_callback(sample_2_coordinates_df)
 
@@ -74,7 +74,7 @@ class DataloaderSuitCase(unittest.TestCase):
             CallbackInterpolateCoordinates(
                 coordinates_columns=self.coordinate_columns,
                 method="linear",
-                max_distance=50),
+                max_distance=25),
             CallbackDenormalizeCoordinates(
                 coordinates_columns=self.coordinate_columns,
                 image_size=(1920, 1080),
@@ -117,7 +117,7 @@ class DataloaderSuitCase(unittest.TestCase):
             CallbackInterpolateCoordinates(
                 coordinates_columns=self.coordinate_columns,
                 method="linear",
-                max_distance=50),
+                max_distance=25),
             CallbackDenormalizeCoordinates(
                 coordinates_columns=self.coordinate_columns,
                 image_size=self.video_frame_size,
@@ -148,7 +148,7 @@ class DataloaderSuitCase(unittest.TestCase):
             CallbackInterpolateCoordinates(
                 coordinates_columns=self.coordinate_columns,
                 method="linear",
-                max_distance=50),
+                max_distance=25),
             CallbackDenormalizeCoordinates(
                 coordinates_columns=self.coordinate_columns,
                 image_size=self.video_frame_size,

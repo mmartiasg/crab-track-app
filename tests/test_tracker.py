@@ -176,7 +176,8 @@ class TestTracker(unittest.TestCase):
         callback_list = [
             CallbackInterpolateCoordinates(
                 coordinates_columns=coordinates_columns,
-                method="linear"),
+                method="linear",
+                max_distance=25),
             CallbackDenormalizeCoordinates(
                 coordinates_columns=coordinates_columns,
                 image_size=(self.config.get_config["input"]["resolution"]["width"],

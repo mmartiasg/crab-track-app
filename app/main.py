@@ -11,6 +11,7 @@ from src.callbacks.post_processing import CallbackDenormalizeCoordinates, Callba
     CallbackSaveToDisk
 from src.callbacks.video_render import CallbackRenderVideoSingleObjectTracking
 from src.tracking import TRACKER_CLASSES
+import pandas as pd
 
 
 def create_job(video_path, config, logging):
@@ -28,22 +29,30 @@ def create_job(video_path, config, logging):
     render_videos = config.get_config["output"]["render_videos"]
 
     coordinates_columns = ["x1", "y1", "x2", "y2"]
-    callback_list = [
-        CallbackInterpolateCoordinates(
+
+    callback_list = []
+    postfix = ""
+
+    if config.get_config["output"]["interpolate"]:
+        callback_list.append(CallbackInterpolateCoordinates(
             coordinates_columns=coordinates_columns,
             method="linear",
             # 5 frames interpolation limit
             # 1 video has 25 frames per second thus 25 * 5
-            max_distance=25*5),
-        CallbackDenormalizeCoordinates(
+            max_distance=25))
+        postfix += "_interpolated"
+
+    if config.get_config["output"]["denormalize"]:
+        callback_list.append(CallbackDenormalizeCoordinates(
             coordinates_columns=coordinates_columns,
             image_size=(config.get_config["input"]["resolution"]["width"],
                         config.get_config["input"]["resolution"]["height"]),
-            method="xyxy"),
-        CallbackSaveToDisk(file_path=os.path.join(config.get_config["output"]["path"],
-                                                  "stats",
-                                                  video_name + "_post_processed.csv"))
-    ]
+            method="xyxy"))
+        postfix += "_denormalized"
+
+    callback_list.append(CallbackSaveToDisk(file_path=os.path.join(config.get_config["output"]["path"],
+                                                                   "stats",
+                                                                   video_name + f"{postfix}.csv")))
 
     if video_name in render_videos:
         render_callback = CallbackRenderVideoSingleObjectTracking(
@@ -80,9 +89,62 @@ def create_job(video_path, config, logging):
     return tracker.track_video(callbacks=callbacks)
 
 
+def render_video(video, stats_path, input_video_path, output_video_path):
+    if video + "_post_processed.csv" in os.listdir(stats_path):
+        render_callback = CallbackRenderVideoSingleObjectTracking(
+            output_video_path=os.path.join(output_video_path,
+                                           video + ".mp4"),
+            input_video_path=os.path.join(input_video_path,
+                                          video + ".mp4"),
+            coordinate_columns=["x1", "y1", "x2", "y2"],
+            bbox_color=(0, 0, 255))
+
+        render_callback(pd.read_csv(os.path.join(stats_path, video + "_post_processed.csv")))
+
+
+def interpolate_coordinates(video, stats_path, coordinates_columns, method="linear", max_distance=25):
+    if video + ".csv" in os.listdir(stats_path):
+        interpolate_callback = CallbackInterpolateCoordinates(
+            coordinates_columns=coordinates_columns,
+            method=method,
+            # 5 frames interpolation limit
+            # 1 video has 25 frames per second thus 25 * 5
+            max_distance=max_distance)
+
+        interpolated_df = interpolate_callback(pd.read_csv(os.path.join(stats_path, video + ".csv")))
+        interpolated_df.to_csv(f"{video}_interpolated.csv", index=False)
+
+
+def denormalize_coordinates(video, stats_path, coordinates_columns, width, height):
+    if video + ".csv" in os.listdir(stats_path):
+        denormalize_callback = CallbackDenormalizeCoordinates(
+            coordinates_columns=coordinates_columns,
+            image_size=(width,
+                        height),
+            method="xyxy")
+
+        denormalize_df = denormalize_callback(pd.read_csv(os.path.join(stats_path, video + ".csv")))
+        denormalize_df.to_csv(f"{video}_denormalized.csv", index=False)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Configurations for the script")
-    parser.add_argument("--config_path", help="Specify the config path", default=None)
+    parser.add_argument("--config_path",
+                        help="Specify the config path",
+                        default=None)
+    parser.add_argument("--render_video_only",
+                        help="Option to just render a video with an existing tracking file",
+                        default=False)
+    parser.add_argument("--interpolate_existing_tracks",
+                        help="Interpolate existing tracks only",
+                        default=False)
+    parser.add_argument("--denormalized_existing_tracks",
+                        help="Denormalized existing [interpolated] tracks only to output resolution in config",
+                        default=False)
+    parser.add_argument("--track",
+                        help="Option track on the videos in the provided path",
+                        default=True)
+
     args = parser.parse_args()
 
     if args.config_path is not None:
@@ -124,13 +186,49 @@ def main():
         os.path.join(config.get_config["input"]["path"], f"*.{config.get_config['input']['extension']}"))
     logging.info(f"List of videos to process: {video_paths}")
 
-    # Use joblib to process videos, creating objects on demand
-    with parallel_backend("loky", verbose=100):
-        Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
-            (delayed(create_job)(video_path, config, logging) for video_path in video_paths)
-        )
+    if args.render_video_only:
+        with parallel_backend("loky", verbose=100):
+            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
+                (delayed(render_video)(video,
+                                       os.path.join(config.get_config["output"]["path"], "stats"),
+                                       config.get_config["input"]["path"],
+                                       output_video_path) for video in config.get_config["output"]["render_videos"])
+            )
 
-    logging.info("All videos processed.")
+    if args.interpolate_existing_tracks:
+        with parallel_backend("loky", verbose=100):
+            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
+                (delayed(interpolate_coordinates)(video,
+                                                  os.path.join(config.get_config["output"]["path"], "stats"),
+                                                  ["x1", "y1", "x2", "y2"],
+                                                  "linear",
+                                                  25) for video in config.get_config["output"]["render_videos"])
+            )
+
+    if args.denormalized_existing_tracks:
+        if args.interpolate_existing_tracks:
+            postfix = ""
+            if args.interpolate_existing_tracks:
+                postfix = "_interpolated"
+
+        with parallel_backend("loky", verbose=100):
+            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
+                (delayed(denormalize_coordinates)(video + postfix,
+                                                  os.path.join(config.get_config["output"]["path"], "stats"),
+                                                  ["x1", "y1", "x2", "y2"],
+                                                  "linear",
+                                                  25) for video in config.get_config["output"]["render_videos"])
+            )
+
+    if not (args.render_video_only or
+            args.denormalized_existing_tracks or
+            args.interpolate_existing_tracks) and args.track_default:
+        # Use joblib to process videos, creating objects on demand
+        with parallel_backend("loky", verbose=100):
+            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
+                (delayed(create_job)(video_path, config, logging) for video_path in video_paths)
+            )
+        logging.info("All videos processed.")
 
     logger_file_handler.close()
     del main_logging

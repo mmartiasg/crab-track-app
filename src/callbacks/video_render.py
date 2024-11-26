@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import pandas as pd
+from numpy._typing import NDArray
+
 from src.callbacks.post_processing import AbstractCallback
 
 
@@ -53,7 +55,9 @@ class CallbackRenderVideoSingleObjectTracking(AbstractCallback):
 
             # Draw the path using previous points plus the new one for this frame.
             for i in range(frame_index):
-                if (path_points[i] >= 0).all() and (path_points[i + 1] >= 0).all():
+                if ((path_points[i] >= 0).all() and
+                        (path_points[i + 1] >= 0).all() and
+                        euclidean_distance(path_points[i], path_points[i + 1]) < 50):
                     cv2.line(frame, tuple(path_points[i]), tuple(path_points[i + 1]), self.bbox_color, 5)
 
             # write frame to disk
@@ -74,3 +78,7 @@ class CallbackRenderVideoSingleObjectTracking(AbstractCallback):
 
         # to maintain the consistency among callbacks
         return coordinates_df
+
+
+def euclidean_distance(points_1: NDArray, points_2: NDArray) -> float:
+    return ((points_1[0] - points_2[0]) ** 2 + (points_1[1] - points_2[1]) ** 2) ** 0.5
