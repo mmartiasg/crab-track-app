@@ -7,9 +7,9 @@ from joblib import Parallel, delayed, parallel_backend
 import glob
 import logging
 from src.callbacks.compose import ComposeCallback
-from src.callbacks.post_processing import CallbackDenormalizeCoordinates, CallbackInterpolateCoordinates, \
+from src.callbacks.post_processing import CallbackDenormalizeCoordinates, CallbackInterpolateCoordinatesSingleObjectTracking, \
     CallbackSaveToDisk
-from src.callbacks.video_render import CallbackRenderVideoSingleObjectTracking
+from src.callbacks.video_render import CallbackRenderVideoTracking
 from src.tracking import TRACKER_CLASSES
 import pandas as pd
 
@@ -34,7 +34,7 @@ def create_job(video_path, config, logging):
     postfix = ""
 
     if config.get_config["output"]["interpolate"]["enabled"]:
-        callback_list.append(CallbackInterpolateCoordinates(
+        callback_list.append(CallbackInterpolateCoordinatesSingleObjectTracking(
             coordinates_columns=coordinates_columns,
             method="linear",
             # 5 frames interpolation limit
@@ -55,7 +55,7 @@ def create_job(video_path, config, logging):
                                                                    video_name + f"{postfix}.csv")))
 
     if video_name in render_videos:
-        render_callback = CallbackRenderVideoSingleObjectTracking(
+        render_callback = CallbackRenderVideoTracking(
             output_video_path=os.path.join(config.get_config["output"]["path"],
                                            "videos",
                                            video_name + ".mp4"),
@@ -99,7 +99,7 @@ def render_video(video, stats_path, input_video_path, output_video_path, config)
         postfix += "_denormalized"
 
     if video + f"{postfix}.csv" in os.listdir(stats_path):
-        render_callback = CallbackRenderVideoSingleObjectTracking(
+        render_callback = CallbackRenderVideoTracking(
             output_video_path=os.path.join(output_video_path,
                                            video + ".mp4"),
             input_video_path=os.path.join(input_video_path,
@@ -112,7 +112,7 @@ def render_video(video, stats_path, input_video_path, output_video_path, config)
 
 def interpolate_coordinates(video, stats_path, coordinates_columns, method="linear", max_distance=25):
     if video + ".csv" in os.listdir(stats_path):
-        interpolate_callback = CallbackInterpolateCoordinates(
+        interpolate_callback = CallbackInterpolateCoordinatesSingleObjectTracking(
             coordinates_columns=coordinates_columns,
             method=method,
             # 5 frames interpolation limit

@@ -3,7 +3,7 @@ import unittest
 import pandas as pd
 import ultralytics.engine.results
 
-from src.callbacks.post_processing import CallbackInterpolateCoordinates, CallbackSaveToDisk, \
+from src.callbacks.post_processing import CallbackInterpolateCoordinatesSingleObjectTracking, CallbackSaveToDisk, \
     CallbackDenormalizeCoordinates
 from src.tracking.yolo import TrackerByDetection, TrackerByByteTrack
 import os
@@ -174,7 +174,7 @@ class TestTracker(unittest.TestCase):
         coordinates_columns = ["x1", "y1", "x2", "y2"]
 
         callback_list = [
-            CallbackInterpolateCoordinates(
+            CallbackInterpolateCoordinatesSingleObjectTracking(
                 coordinates_columns=coordinates_columns,
                 method="linear",
                 max_distance=25),

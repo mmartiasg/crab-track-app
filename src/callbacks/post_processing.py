@@ -8,13 +8,14 @@ class AbstractCallback(Callback):
         return self.__class__.__name__
 
 
-class CallbackInterpolateCoordinates(AbstractCallback):
+class CallbackInterpolateCoordinatesSingleObjectTracking(AbstractCallback):
     def __init__(self, coordinates_columns, method, max_distance, **kwargs):
         super().__init__(**kwargs)
         self.coordinates_columns = coordinates_columns
         self.method = method
         self.max_distance = 50
 
+    # TODO: modify this to interpolate the same instance object in a multi object track environment.
     def __call__(self, coordinates_df: pd.DataFrame) -> pd.DataFrame:
 
         indices = coordinates_df.index[coordinates_df[self.coordinates_columns].notna().index]

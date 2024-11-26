@@ -6,7 +6,7 @@ from numpy._typing import NDArray
 from src.callbacks.post_processing import AbstractCallback
 
 
-class CallbackRenderVideoSingleObjectTracking(AbstractCallback):
+class CallbackRenderVideoTracking(AbstractCallback):
     def __init__(self, output_video_path, input_video_path, coordinate_columns, bbox_color=(0, 0, 255), **kwargs):
         super().__init__(**kwargs)
         self.input_video_path = input_video_path
@@ -35,34 +35,35 @@ class CallbackRenderVideoSingleObjectTracking(AbstractCallback):
         if not out.isOpened():
             raise Exception('[ERROR] cannot save the video')
 
-        coordinates = coordinates_df[self.coordinate_columns].values
-
         frame_index = 0
         path_points = np.ones((self.frames_count, 2), dtype=int) * -1
 
         ok, frame = cap.read()
 
-        # Assuming 1 boundary box per frame.
         while ok:
-            # Avoid None coordinates
-            # TODO: ask all boxes from the same frame maybe this is easier todo in pandas
-            if not np.isnan(coordinates[frame_index]).any():
-                (x1, y1, x2, y2) = [int(v) for v in coordinates[frame_index]]
+            # Extract all bboxes for that given frame
+            coordinates = coordinates_df.query(f"frame=={frame_index}")[self.coordinate_columns].values
+            # For each bbox
+            for coordinate in coordinates:
+                # If that bbox is not nan
+                if not np.isnan(coordinate).any():
+                    # Extract the coordinates
+                    (x1, y1, x2, y2) = [int(v) for v in coordinate]
 
-                # Draw the boundary box
-                cv2.rectangle(frame, (x1, y1), (x2, y2), self.bbox_color, 2)
+                    # Draw the boundary box
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), self.bbox_color, 2)
 
-                # save the points to draw the path.
-                path_points[frame_index, :] = [(x2 + x1) // 2, (y2 + y1) // 2]
+                    # save the points to draw the path.
+                    path_points[frame_index, :] = [(x2 + x1) // 2, (y2 + y1) // 2]
 
-            # Draw the path using previous points plus the new one for this frame.
-            # only if the point is not None and the distance between the point and the next is less than 50px
-            # This is to avoid big discontinuity segment to be drawn.
-            for i in range(frame_index):
-                if ((path_points[i] >= 0).all() and
-                        (path_points[i + 1] >= 0).all() and
-                        euclidean_distance(path_points[i], path_points[i + 1]) < 50):
-                    cv2.line(frame, tuple(path_points[i]), tuple(path_points[i + 1]), self.bbox_color, 5)
+                # Draw the path using previous points plus the new one for this frame.
+                # only if the point is not None and the distance between the point and the next is less than 50px
+                # This is to avoid big discontinuity segment to be drawn.
+                for i in range(frame_index):
+                    if ((path_points[i] >= 0).all() and
+                            (path_points[i + 1] >= 0).all() and
+                            euclidean_distance(path_points[i], path_points[i + 1]) < 50):
+                        cv2.line(frame, tuple(path_points[i]), tuple(path_points[i + 1]), self.bbox_color, 5)
 
             # write frame to disk
             out.write(frame)

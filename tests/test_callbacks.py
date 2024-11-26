@@ -2,10 +2,10 @@ import unittest
 from src.utils.constants import Config
 import pandas as pd
 from src.callbacks.compose import ComposeCallback
-from src.callbacks.post_processing import (CallbackInterpolateCoordinates,
+from src.callbacks.post_processing import (CallbackInterpolateCoordinatesSingleObjectTracking,
                                            CallbackDenormalizeCoordinates,
                                            CallbackSaveToDisk)
-from src.callbacks.video_render import CallbackRenderVideoSingleObjectTracking
+from src.callbacks.video_render import CallbackRenderVideoTracking
 import os
 import shutil
 
@@ -36,9 +36,9 @@ class DataloaderSuitCase(unittest.TestCase):
         sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__),
                                                            "test_data/sample_2_coordinates.csv"))
 
-        interpolated_callback = CallbackInterpolateCoordinates(coordinates_columns=self.coordinate_columns,
-                                                               method="linear",
-                                                               max_distance=25)
+        interpolated_callback = CallbackInterpolateCoordinatesSingleObjectTracking(coordinates_columns=self.coordinate_columns,
+                                                                                   method="linear",
+                                                                                   max_distance=25)
 
         interpolated_coordinates_df = interpolated_callback(sample_2_coordinates_df)
 
@@ -71,7 +71,7 @@ class DataloaderSuitCase(unittest.TestCase):
         r = {"video_name": "sample_2", "coordinates": sample_2_coordinates_df}
 
         compose_callback = ComposeCallback([
-            CallbackInterpolateCoordinates(
+            CallbackInterpolateCoordinatesSingleObjectTracking(
                 coordinates_columns=self.coordinate_columns,
                 method="linear",
                 max_distance=25),
@@ -105,16 +105,16 @@ class DataloaderSuitCase(unittest.TestCase):
         sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__),
                                                            "test_data/sample_2_coordinates.csv"))
 
-        render_callback = CallbackRenderVideoSingleObjectTracking(output_video_path=os.path.join(self.test_videos_output_path,
-                                                                                                 video_name + ".mp4"),
-                                                                  input_video_path=os.path.join(os.path.dirname(__file__),
+        render_callback = CallbackRenderVideoTracking(output_video_path=os.path.join(self.test_videos_output_path,
+                                                                                     video_name + ".mp4"),
+                                                      input_video_path=os.path.join(os.path.dirname(__file__),
                                                                             self.config.get_config["input"]["path"],
                                                                             "test_sample_2_720p.mp4"),
-                                                                  coordinate_columns=self.coordinate_columns,
-                                                                  bbox_color=(0, 0, 255))
+                                                      coordinate_columns=self.coordinate_columns,
+                                                      bbox_color=(0, 0, 255))
 
         compose_callback = ComposeCallback([
-            CallbackInterpolateCoordinates(
+            CallbackInterpolateCoordinatesSingleObjectTracking(
                 coordinates_columns=self.coordinate_columns,
                 method="linear",
                 max_distance=25),
@@ -136,16 +136,16 @@ class DataloaderSuitCase(unittest.TestCase):
         sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__),
                                                            "test_data/sample_1_coordinates.csv"))
 
-        render_callback = CallbackRenderVideoSingleObjectTracking(output_video_path=os.path.join(self.test_videos_output_path,
-                                                                                                 video_name + ".mp4"),
-                                                                  input_video_path=os.path.join(os.path.dirname(__file__),
+        render_callback = CallbackRenderVideoTracking(output_video_path=os.path.join(self.test_videos_output_path,
+                                                                                     video_name + ".mp4"),
+                                                      input_video_path=os.path.join(os.path.dirname(__file__),
                                                                             self.config.get_config["input"]["path"],
                                                                             "test_sample_1_720p.mp4"),
-                                                                  coordinate_columns=self.coordinate_columns,
-                                                                  bbox_color=(0, 0, 255))
+                                                      coordinate_columns=self.coordinate_columns,
+                                                      bbox_color=(0, 0, 255))
 
         compose_callback = ComposeCallback([
-            CallbackInterpolateCoordinates(
+            CallbackInterpolateCoordinatesSingleObjectTracking(
                 coordinates_columns=self.coordinate_columns,
                 method="linear",
                 max_distance=25),
