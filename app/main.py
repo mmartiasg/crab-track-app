@@ -215,10 +215,9 @@ def main():
             )
 
     if args.denormalized_existing_tracks:
+        postfix = ""
         if args.interpolate_existing_tracks:
-            postfix = ""
-            if args.interpolate_existing_tracks:
-                postfix = "_interpolated"
+            postfix = "_interpolated"
 
         with parallel_backend("loky", verbose=100):
             Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
@@ -231,7 +230,7 @@ def main():
 
     if not (args.render_video_only or
             args.denormalized_existing_tracks or
-            args.interpolate_existing_tracks) and args.track_default:
+            args.interpolate_existing_tracks) and args.track:
         # Use joblib to process videos, creating objects on demand
         with parallel_backend("loky", verbose=100):
             Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
