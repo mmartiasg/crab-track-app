@@ -28,7 +28,7 @@ def create_job(video_path, config, logging):
 
     render_videos = config.get_config["output"]["render_videos"]
 
-    coordinates_columns = ["x1", "y1", "x2", "y2"]
+    coordinates_columns = config.get_config["output"]["coordinates_columns"]
 
     callback_list = []
     postfix = ""
@@ -89,8 +89,16 @@ def create_job(video_path, config, logging):
     return tracker.track_video(callbacks=callbacks)
 
 
-def render_video(video, stats_path, input_video_path, output_video_path):
-    if video + "_post_processed.csv" in os.listdir(stats_path):
+def render_video(video, stats_path, input_video_path, output_video_path, config):
+    postfix = ""
+
+    if config.get_config["output"]["interpolate"]:
+        postfix += "_interpolated"
+
+    if config.get_config["output"]["denormalize"]:
+        postfix += "_denormalized"
+
+    if video + f"{postfix}.csv" in os.listdir(stats_path):
         render_callback = CallbackRenderVideoSingleObjectTracking(
             output_video_path=os.path.join(output_video_path,
                                            video + ".mp4"),
@@ -192,7 +200,8 @@ def main():
                 (delayed(render_video)(video,
                                        os.path.join(config.get_config["output"]["path"], "stats"),
                                        config.get_config["input"]["path"],
-                                       output_video_path) for video in config.get_config["output"]["render_videos"])
+                                       output_video_path,
+                                       config) for video in config.get_config["output"]["render_videos"])
             )
 
     if args.interpolate_existing_tracks:
@@ -200,7 +209,7 @@ def main():
             Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
                 (delayed(interpolate_coordinates)(video,
                                                   os.path.join(config.get_config["output"]["path"], "stats"),
-                                                  ["x1", "y1", "x2", "y2"],
+                                                  config.get_config["output"]["coordinates_columns"],
                                                   "linear",
                                                   25) for video in config.get_config["output"]["render_videos"])
             )
@@ -215,7 +224,7 @@ def main():
             Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
                 (delayed(denormalize_coordinates)(video + postfix,
                                                   os.path.join(config.get_config["output"]["path"], "stats"),
-                                                  ["x1", "y1", "x2", "y2"],
+                                                  config.get_config["output"]["coordinates_columns"],
                                                   "linear",
                                                   25) for video in config.get_config["output"]["render_videos"])
             )
