@@ -17,6 +17,7 @@ input:
     height: 1080
 output:
   path: /results # do not change it
+  render_videos: [""] # Videos to render with bbox and path
 multiprocess:
   simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
   threads_per_video: 2 # Number of CPUs allocated to process each video

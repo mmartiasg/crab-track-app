@@ -1,7 +1,6 @@
+from pandas.errors import IntCastingNaNError
 from ultralytics import YOLO
 from src.dataloaders.video_loader import VideoFramesGenerator
-import torchvision
-import multiprocessing as mpt
 import logging
 import os
 import itertools
@@ -92,8 +91,17 @@ class BaseTracker:
 
     def post_process(self, predictions, callbacks):
         for callback in callbacks:
-            callback(predictions)
-            self.logger.debug(f"Called callback: {callback.__class__.__name__}")
+            self.logger.debug(f"Start executing callback: {callback.__name__()}")
+            try:
+                callback(predictions)
+            except IntCastingNaNError as e:
+                self.logger.error(f"Fail executing callback: {callback.__name__()}: {e}")
+                self.logger.error(e, exc_info=True)
+            except Exception as e:
+                self.logger.error(f"Fail executing callback: {callback.__name__()}: {e}")
+                self.logger.error(e, exc_info=True)
+
+            self.logger.debug(f"Finish executing callback: {callback.__name__()}")
 
     def transform_data_response(self, response):
         return self.response_transform(response)

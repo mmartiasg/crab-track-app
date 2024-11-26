@@ -5,7 +5,7 @@ import ultralytics.engine.results
 
 from src.callbacks.post_processing import CallbackInterpolateCoordinates, CallbackSaveToDisk, \
     CallbackDenormalizeCoordinates
-from src.tracking.yolo import TrackerByDetection
+from src.tracking.yolo import TrackerByDetection, TrackerByByteTrack
 import os
 from src.utils.constants import Config
 from ultralytics.engine.results import Results
@@ -13,6 +13,7 @@ import torch
 import numpy as np
 from src.transforms.Adapter import YoloAdapter, DefaultAdapter
 from unittest.mock import patch, MagicMock
+
 
 class TestTracker(unittest.TestCase):
     @patch("src.tracking.yolo.VideoFramesGenerator")
@@ -62,7 +63,7 @@ class TestTracker(unittest.TestCase):
                                           log_dir=os.path.join(os.path.dirname(__file__),
                                                                self.config.get_config["output"]["path"]))
 
-        self.tracker_raw_response = TrackerByDetection(input_video_path=self.test_video_1_path,
+        self.tracker_raw_response = TrackerByByteTrack(input_video_path=self.test_video_1_path,
                                                        batch_size=self.config.get_config["model"]["batch_size"],
                                                        internal_resolution=(
                                                            self.config.get_config["model"]["internal_resolution"][

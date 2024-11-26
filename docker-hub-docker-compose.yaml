@@ -1,11 +1,11 @@
 services:
   crab-track:
-    image: mmatiasg/crab-track:v0.1.6-beta
+    image: mmatiasg/crab-track:v0.2.0
     container_name: crab-track
     tty: false
     volumes:
       - type: bind
-        source: /home/matias/workspace/datasets/sample_dataset_icman
+        source: /home/matias/workspace/datasets/ICMAN-30-Octubre-2022
         target: /dataset/samples
       - type: bind
         source: /home/matias/workspace/crab-track-app/results

@@ -9,28 +9,32 @@ import logging
 from src.callbacks.compose import ComposeCallback
 from src.callbacks.post_processing import CallbackDenormalizeCoordinates, CallbackInterpolateCoordinates, \
     CallbackSaveToDisk
-from src.callbacks.video_render import CallbackRenderVideo
-from src.tracking.yolo import TrackerByDetection, TrackerByByteTrack
-TRACKER_CLASSES = {
-    "detection": TrackerByDetection,
-    "byte_track": TrackerByByteTrack
-}
+from src.callbacks.video_render import CallbackRenderVideoSingleObjectTracking
+from src.tracking import TRACKER_CLASSES
 
 
-def create_job(video_path, config):
+def create_job(video_path, config, logging):
     video_name = video_path.split("/")[-1].split(".")[0]
 
     # Get the tracker algorithm from the configuration
     algorithm_name = config.get_config["model"]["algorithm"]
     tracker_class = TRACKER_CLASSES.get(algorithm_name)
     if tracker_class is None:
-        raise ModuleNotFoundError(f"No tracker found for algorithm '{algorithm_name}'. Available options: {list(TRACKER_CLASSES.keys())}")
+        logging.critical(
+            f"No tracker found for algorithm '{algorithm_name}'. Available options: {list(TRACKER_CLASSES.keys())}")
+        raise ModuleNotFoundError(
+            f"No tracker found for algorithm '{algorithm_name}'. Available options: {list(TRACKER_CLASSES.keys())}")
+
+    render_videos = config.get_config["output"]["render_videos"]
 
     coordinates_columns = ["x1", "y1", "x2", "y2"]
     callback_list = [
         CallbackInterpolateCoordinates(
             coordinates_columns=coordinates_columns,
-            method="linear"),
+            method="linear",
+            # 5 frames interpolation limit
+            # 1 video has 25 frames per second thus 25 * 5
+            max_distance=25*5),
         CallbackDenormalizeCoordinates(
             coordinates_columns=coordinates_columns,
             image_size=(config.get_config["input"]["resolution"]["width"],
@@ -41,8 +45,8 @@ def create_job(video_path, config):
                                                   video_name + "_post_processed.csv"))
     ]
 
-    if video_name == "1_crop" or video_name == "12_crop" or video_name == "8_sample" or video_name == "12":
-        render_callback = CallbackRenderVideo(
+    if video_name in render_videos:
+        render_callback = CallbackRenderVideoSingleObjectTracking(
             output_video_path=os.path.join(config.get_config["output"]["path"],
                                            "videos",
                                            video_name + ".mp4"),
@@ -56,23 +60,23 @@ def create_job(video_path, config):
     save_raw_data_callback = CallbackSaveToDisk(file_path=os.path.join(config.get_config["output"]["path"],
                                                                        "stats",
                                                                        video_name + ".csv"))
-    callbacks = [compose_callback, save_raw_data_callback]
+    callbacks = [save_raw_data_callback, compose_callback]
 
     tracker = tracker_class(input_video_path=video_path,
-                                 log_dir=config.get_config["output"]["path"],
-                                 # keep the name of the video
-                                 batch_size=config.get_config["model"]["batch_size"],
-                                 confidence_threshold=config.get_config["model"]["conf_threshold"],
-                                 nms_threshold=config.get_config["model"]["nms_threshold"],
-                                 device=config.get_config["model"]["device"],
-                                 threads_per_video=config.get_config["multiprocess"]["threads_per_video"],
-                                 internal_resolution=(config.get_config["model"]["internal_resolution"]["height"],
-                                                      config.get_config["model"]["internal_resolution"]["width"]),
-                                 model_weights=config.get_config["model"]["path"],
-                                 response_transform=YoloAdapter(video_name=video_path.split("/")[-1].split(".")[0],
-                                                                tracker_name="yolov8",
-                                                                dataset="test"))
-
+                            log_dir=config.get_config["output"]["path"],
+                            # keep the name of the video
+                            batch_size=config.get_config["model"]["batch_size"],
+                            confidence_threshold=config.get_config["model"]["conf_threshold"],
+                            nms_threshold=config.get_config["model"]["nms_threshold"],
+                            device=config.get_config["model"]["device"],
+                            threads_per_video=config.get_config["multiprocess"]["threads_per_video"],
+                            internal_resolution=(config.get_config["model"]["internal_resolution"]["height"],
+                                                 config.get_config["model"]["internal_resolution"]["width"]),
+                            model_weights=config.get_config["model"]["path"],
+                            response_transform=YoloAdapter(video_name=video_path.split("/")[-1].split(".")[0],
+                                                           tracker_name="yolov8",
+                                                           dataset="test"))
+    logging.info(f"Start tracking {video_name}")
     return tracker.track_video(callbacks=callbacks)
 
 
@@ -123,10 +127,10 @@ def main():
     # Use joblib to process videos, creating objects on demand
     with parallel_backend("loky", verbose=100):
         Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
-            (delayed(create_job)(video_path, config) for video_path in video_paths)
+            (delayed(create_job)(video_path, config, logging) for video_path in video_paths)
         )
 
-    print("All videos processed.")
+    logging.info("All videos processed.")
 
     logger_file_handler.close()
     del main_logging
