@@ -45,7 +45,8 @@ class CallbackRenderVideoSingleObjectTracking(AbstractCallback):
         # Assuming 1 boundary box per frame.
         while ok:
             # Avoid None coordinates
-            if coordinates_df.iloc[frame_index][self.coordinate_columns].notna().all():
+            # TODO: ask all boxes from the same frame maybe this is easier todo in pandas
+            if not np.isnan(coordinates[frame_index]).any():
                 (x1, y1, x2, y2) = [int(v) for v in coordinates[frame_index]]
 
                 # Draw the boundary box
