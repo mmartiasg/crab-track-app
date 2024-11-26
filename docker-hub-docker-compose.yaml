@@ -1,6 +1,6 @@
 services:
   crab-track:
-    image: mmatiasg/crab-track:v0.2.0
+    image: mmatiasg/crab-track:v0.3.1
     container_name: crab-track
     tty: false
     volumes:
@@ -17,4 +17,5 @@ services:
       YOLO_VERBOSE: false
     command: ["python",
               "main.py",
-              "--config_path=/config/run_conf.yaml --track --interpolate_existing_tracks --denormalized_existing_tracks"]
+              "--config_path=config/run_conf.yaml",
+              "--track"]
