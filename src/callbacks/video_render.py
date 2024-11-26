@@ -57,12 +57,12 @@ class CallbackRenderVideoTracking(AbstractCallback):
                     path_points[frame_index, :] = [(x2 + x1) // 2, (y2 + y1) // 2]
 
                 # Draw the path using previous points plus the new one for this frame.
-                # only if the point is not None and the distance between the point and the next is less than 50px
+                # only if the point is not None and the distance between the point and the next is less than 20
                 # This is to avoid big discontinuity segment to be drawn.
                 for i in range(frame_index):
                     if ((path_points[i] >= 0).all() and
                             (path_points[i + 1] >= 0).all() and
-                            euclidean_distance(path_points[i], path_points[i + 1]) < 50):
+                            euclidean_distance(path_points[i], path_points[i + 1]) <= 20):
                         cv2.line(frame, tuple(path_points[i]), tuple(path_points[i + 1]), self.bbox_color, 5)
 
             # write frame to disk

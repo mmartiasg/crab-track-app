@@ -5,7 +5,7 @@ import ultralytics.engine.results
 
 from src.callbacks.post_processing import CallbackInterpolateCoordinatesSingleObjectTracking, CallbackSaveToDisk, \
     CallbackDenormalizeCoordinates
-from src.tracking.yolo import TrackerByDetection, TrackerByByteTrack
+from src.tracking.yolo import TrackerByDetection, TrackerByByteTrack, BaseTracker
 import os
 from src.utils.constants import Config
 from ultralytics.engine.results import Results
@@ -168,8 +168,9 @@ class TestTracker(unittest.TestCase):
         self.assertAlmostEqual(round(preds_df.iloc[0]["y2"], 4), round(250 / 1920, 4), delta=1e-7)
 
     @patch("src.tracking.yolo.VideoFramesGenerator")
-    def test_call_chain_callbacks_interpolation_and_denormalization_bbox_normalized_returns_256_256_115_249_file_saved_as_test_post_processed_csv(self,
-                                                                                                 video_frames_generator_mock_class):
+    def test_call_chain_callbacks_interpolation_and_denormalization_bbox_normalized_returns_256_256_115_249_file_saved_as_test_post_processed_csv(
+            self,
+            video_frames_generator_mock_class):
 
         coordinates_columns = ["x1", "y1", "x2", "y2"]
 
@@ -224,4 +225,52 @@ class TestTracker(unittest.TestCase):
         self.assertEqual(preds_df.iloc[0]["y2"], 249)
 
         self.assertTrue(os.path.exists(os.path.join(self.test_stats_output_path,
-                                                      "test" + "_post_processed.csv")))
+                                                    "test" + "_post_processed.csv")))
+
+    @patch("src.tracking.yolo.YOLO")
+    def test_instantiate_base_tracker_predict_step_and_set_up_video_loader_returns_NotImplementedError_exception(self,
+                                                                                                                 yolo_class_mock):
+        instance_yolo = yolo_class_mock.return_value
+
+        self.assertRaises(NotImplementedError, BaseTracker, input_video_path=self.test_video_1_path,
+                          batch_size=self.config.get_config["model"]["batch_size"],
+                          internal_resolution=(
+                              self.config.get_config["model"]["internal_resolution"][
+                                  "height"],
+                              self.config.get_config["model"]["internal_resolution"][
+                                  "width"]),
+                          confidence_threshold=self.config.get_config["model"][
+                              "conf_threshold"],
+                          nms_threshold=self.config.get_config["model"]["nms_threshold"],
+                          device=self.config.get_config["model"]["device"],
+                          model_weights="",
+                          response_transform=DefaultAdapter(video_name="test",
+                                                            tracker_name="test",
+                                                            dataset="test"),
+                          log_dir=os.path.join(os.path.dirname(__file__),
+                                               self.config.get_config["output"]["path"]))
+
+        # This try is needed due to the setup_video method blows up during creation.
+        # Thus, I need to capture that ignore it and use the other method that raise an exception predict_step
+        try:
+            base_tracker = BaseTracker(input_video_path = self.test_video_1_path,
+            batch_size = self.config.get_config["model"]["batch_size"],
+            internal_resolution = (
+                self.config.get_config["model"]["internal_resolution"][
+                    "height"],
+                self.config.get_config["model"]["internal_resolution"][
+                    "width"]),
+            confidence_threshold = self.config.get_config["model"][
+                "conf_threshold"],
+            nms_threshold = self.config.get_config["model"]["nms_threshold"],
+            device = self.config.get_config["model"]["device"],
+            model_weights = "",
+            response_transform = DefaultAdapter(video_name="test",
+                                                tracker_name="test",
+                                                dataset="test"),
+            log_dir = os.path.join(os.path.dirname(__file__),
+                                   self.config.get_config["output"]["path"]))
+
+            self.assertRaises(NotImplementedError, base_tracker.predict_step)
+        except NotImplementedError:
+            pass

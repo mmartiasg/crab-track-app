@@ -13,12 +13,12 @@ class CallbackInterpolateCoordinatesSingleObjectTracking(AbstractCallback):
         super().__init__(**kwargs)
         self.coordinates_columns = coordinates_columns
         self.method = method
-        self.max_distance = 50
+        self.max_distance = max_distance
 
     # TODO: modify this to interpolate the same instance object in a multi object track environment.
     def __call__(self, coordinates_df: pd.DataFrame) -> pd.DataFrame:
 
-        indices = coordinates_df.index[coordinates_df[self.coordinates_columns].notna().index]
+        indices = coordinates_df.index[coordinates_df[self.coordinates_columns].notna().all(axis=1)]
         for i in range(len(indices) - 1):
             # Check if the distance between consecutive non-NaN points is within the limit
             if indices[i + 1] - indices[i] <= self.max_distance:
