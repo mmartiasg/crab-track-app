@@ -18,8 +18,11 @@ input:
 output:
   path: test_results
   render_videos: ["test_sample_1_720p", "test_sample_2_720p"]
-  interpolate: true
-  denormalize: true
+  interpolate:
+    enabled: true
+    max_distance: 25
+  denormalize:
+    enabled: true
   coordinates_columns: ["x1", "y1", "x2", "y2"]
 multiprocess:
   cpu_videos: 1

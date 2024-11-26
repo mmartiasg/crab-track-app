@@ -33,16 +33,16 @@ def create_job(video_path, config, logging):
     callback_list = []
     postfix = ""
 
-    if config.get_config["output"]["interpolate"]:
+    if config.get_config["output"]["interpolate"]["enabled"]:
         callback_list.append(CallbackInterpolateCoordinates(
             coordinates_columns=coordinates_columns,
             method="linear",
             # 5 frames interpolation limit
             # 1 video has 25 frames per second thus 25 * 5
-            max_distance=25))
+            max_distance=config.get_config["output"]["interpolate"]["max_distance"]))
         postfix += "_interpolated"
 
-    if config.get_config["output"]["denormalize"]:
+    if config.get_config["output"]["denormalize"]["enabled"]:
         callback_list.append(CallbackDenormalizeCoordinates(
             coordinates_columns=coordinates_columns,
             image_size=(config.get_config["input"]["resolution"]["width"],
@@ -92,10 +92,10 @@ def create_job(video_path, config, logging):
 def render_video(video, stats_path, input_video_path, output_video_path, config):
     postfix = ""
 
-    if config.get_config["output"]["interpolate"]:
+    if config.get_config["output"]["interpolate"]["enabled"]:
         postfix += "_interpolated"
 
-    if config.get_config["output"]["denormalize"]:
+    if config.get_config["output"]["denormalize"]["enabled"]:
         postfix += "_denormalized"
 
     if video + f"{postfix}.csv" in os.listdir(stats_path):
@@ -211,7 +211,7 @@ def main():
                                                   os.path.join(config.get_config["output"]["path"], "stats"),
                                                   config.get_config["output"]["coordinates_columns"],
                                                   "linear",
-                                                  25) for video in config.get_config["output"]["render_videos"])
+                                                  config.get_config["output"]["interpolate"]["max_distance"]) for video in config.get_config["output"]["render_videos"])
             )
 
     if args.denormalized_existing_tracks:

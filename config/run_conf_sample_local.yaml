@@ -19,7 +19,10 @@ output:
   path: /home/results
   render_videos: [""] # Videos to render with bbox and path
   interpolate: # true or false to allow for interpolation of the path.
-  denormalize: # true or false to allow for de-normalization of the coordinates of the path.
+    enabled: # true or false to allow for interpolation of the path.
+    max_distance: # max length for a frame to interpolate the results between recommended 25.
+  denormalize:
+    enabled: # true or false to allow for de-normalization of the coordinates of the path.
   coordinates_columns: # Columns coordinate names eg: ["x1", "y1", "x2", "y2"]
 multiprocess:
   simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
