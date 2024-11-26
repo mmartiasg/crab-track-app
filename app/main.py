@@ -211,7 +211,8 @@ def main():
                                                   os.path.join(config.get_config["output"]["path"], "stats"),
                                                   config.get_config["output"]["coordinates_columns"],
                                                   "linear",
-                                                  config.get_config["output"]["interpolate"]["max_distance"]) for video in config.get_config["output"]["render_videos"])
+                                                  config.get_config["output"]["interpolate"]["max_distance"]) for video
+                 in config.get_config["output"]["render_videos"])
             )
 
     if args.denormalized_existing_tracks:
@@ -224,7 +225,9 @@ def main():
                 (delayed(denormalize_coordinates)(video + postfix,
                                                   os.path.join(config.get_config["output"]["path"], "stats"),
                                                   config.get_config["output"]["coordinates_columns"],
-                                                  "linear") for video in config.get_config["output"]["render_videos"])
+                                                  (config.get_config["output"]["width"],
+                                                   config.get_config["output"]["height"]),
+                                                  "xyxy") for video in config.get_config["output"]["render_videos"])
             )
 
     if not (args.render_video_only or
