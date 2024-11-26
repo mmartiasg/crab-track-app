@@ -44,6 +44,7 @@ class CallbackRenderVideoSingleObjectTracking(AbstractCallback):
 
         # Assuming 1 boundary box per frame.
         while ok:
+            # Avoid None coordinates
             if coordinates_df.iloc[frame_index][self.coordinate_columns].notna().all():
                 (x1, y1, x2, y2) = [int(v) for v in coordinates[frame_index]]
 
@@ -54,6 +55,8 @@ class CallbackRenderVideoSingleObjectTracking(AbstractCallback):
                 path_points[frame_index, :] = [(x2 + x1) // 2, (y2 + y1) // 2]
 
             # Draw the path using previous points plus the new one for this frame.
+            # only if the point is not None and the distance between the point and the next is less than 50px
+            # This is to avoid big discontinuity segment to be drawn.
             for i in range(frame_index):
                 if ((path_points[i] >= 0).all() and
                         (path_points[i + 1] >= 0).all() and
