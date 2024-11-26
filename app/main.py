@@ -142,16 +142,16 @@ def main():
                         default=None)
     parser.add_argument("--render_video_only",
                         help="Option to just render a video with an existing tracking file",
-                        default=False)
+                        action=argparse.BooleanOptionalAction)
     parser.add_argument("--interpolate_existing_tracks",
                         help="Interpolate existing tracks only",
-                        default=True)
+                        action=argparse.BooleanOptionalAction)
     parser.add_argument("--denormalized_existing_tracks",
                         help="Denormalized existing [interpolated] tracks only to output resolution in config",
-                        default=True)
+                        action=argparse.BooleanOptionalAction)
     parser.add_argument("--track",
                         help="Option track on the videos in the provided path",
-                        default=True)
+                        action=argparse.BooleanOptionalAction)
 
     args = parser.parse_args()
 

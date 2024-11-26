@@ -15,4 +15,6 @@ services:
         target: /config
     environment:
       YOLO_VERBOSE: false
-    command: ["python", "main.py", "--config_path=/config/run_conf.yaml"]
+    command: ["python",
+              "main.py",
+              "--config_path=/config/run_conf.yaml --track --interpolate_existing_tracks --denormalized_existing_tracks"]
