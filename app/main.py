@@ -145,10 +145,10 @@ def main():
                         default=False)
     parser.add_argument("--interpolate_existing_tracks",
                         help="Interpolate existing tracks only",
-                        default=False)
+                        default=True)
     parser.add_argument("--denormalized_existing_tracks",
                         help="Denormalized existing [interpolated] tracks only to output resolution in config",
-                        default=False)
+                        default=True)
     parser.add_argument("--track",
                         help="Option track on the videos in the provided path",
                         default=True)
