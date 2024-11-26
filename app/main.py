@@ -225,8 +225,8 @@ def main():
                 (delayed(denormalize_coordinates)(video + postfix,
                                                   os.path.join(config.get_config["output"]["path"], "stats"),
                                                   config.get_config["output"]["coordinates_columns"],
-                                                  (config.get_config["output"]["width"],
-                                                   config.get_config["output"]["height"]),
+                                                  config.get_config["output"]["width"],
+                                                  config.get_config["output"]["height"],
                                                   "xyxy") for video in config.get_config["output"]["render_videos"])
             )
 
