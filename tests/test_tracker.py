@@ -12,7 +12,7 @@ from ultralytics.engine.results import Results
 import torch
 import numpy as np
 from src.transforms.Adapter import YoloAdapter, DefaultAdapter
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 
 
 class TestTracker(unittest.TestCase):
@@ -90,6 +90,7 @@ class TestTracker(unittest.TestCase):
 
         self.tracker_raw_response.model.predict = MagicMock(return_value=[results1])
         self.tracker.model.predict = MagicMock(return_value=[results1])
+
 
     def test_one_step_prediction_returns_one_bbox_from_class_Results(self):
         batches = [torch.zeros(3, 256, 256)]
@@ -271,6 +272,52 @@ class TestTracker(unittest.TestCase):
             log_dir = os.path.join(os.path.dirname(__file__),
                                    self.config.get_config["output"]["path"]))
 
-            self.assertRaises(NotImplementedError, base_tracker.predict_step)
+            self.assertRaises(NotImplementedError, base_tracker.predict_step, [])
         except NotImplementedError:
             pass
+
+    def test_post_process_yolo_tracker_fails_with_log_error_entries_for_each_callback(self):
+        interpolate_callback = CallbackInterpolateCoordinatesSingleObjectTracking(
+            coordinates_columns=["x2", "x3", "x4", "x5"],
+            method="linear",
+            max_distance=25)
+
+        denormalize_callback = CallbackDenormalizeCoordinates(
+            coordinates_columns=self.coordinate_columns,
+            image_size=(1920, 1080),
+            method="xyxy")
+
+        results1 = Results(boxes=torch.tensor([np.inf, np.nan, np.inf, np.inf, 0, 0.9]),
+                           path=".", names={0: 'Crab', 1: 'Backgroud'},
+                           orig_img=np.zeros((720, 1280)))
+
+        results1.speed = {'inference': 5.405731499195099, 'postprocess': 0.4694610834121704,
+                          'preprocess': 0.00035390257835388184}
+
+        self.tracker.logger = MagicMock()
+
+        # 1 bbox per frame
+        self.tracker.model.predict = MagicMock(return_value=[results1])
+
+        self.tracker.track_video([interpolate_callback, denormalize_callback])
+
+        self.tracker.logger.error.assert_has_calls([
+            call('Fail executing callback: CallbackInterpolateCoordinatesSingleObjectTracking: "[\'x3\', \'x4\', \'x5\'] not in index"', exc_info=True),
+            call('Fail executing callback: CallbackDenormalizeCoordinates: Cannot convert non-finite values (NA or inf) to integer', exc_info=True)
+        ])
+
+    def test_create_coordinates_fails_with_critical_log(self):
+        self.tracker.logger = MagicMock()
+
+        dummy_data = {
+            'x1': [1, 1, 1, np.nan, np.nan, np.nan, np.nan, np.nan],
+            'y1': [1, 1, 2, np.nan, np.nan, np.nan, np.nan, np.nan],
+            'x2': [1, 1, 3, np.nan, np.nan, np.nan, np.nan, np.nan],
+            'y2': [1, 1, 4, np.nan, np.nan, np.nan, np.nan, np.nan]
+        }
+
+        self.tracker.create_coordinates_dataframe([dummy_data])
+
+        self.tracker.logger.critical.assert_has_calls([
+            call("Building dataframe", exc_info=True),
+        ])

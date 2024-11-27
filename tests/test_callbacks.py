@@ -264,3 +264,38 @@ class DataloaderSuitCase(unittest.TestCase):
                          == []).all())
 
         self.assertTrue((dummy_coordinates_interpolated_df.iloc[-1] == [1, 2, 3, 4]).all())
+
+    def test_callbacknaming_returns_CallbackInterpolateCoordinatesSingleObjectTracking(self):
+        interpolate_callback = CallbackInterpolateCoordinatesSingleObjectTracking(
+            coordinates_columns=self.coordinate_columns,
+            method="linear",
+            max_distance=5)
+        self.assertEqual("CallbackInterpolateCoordinatesSingleObjectTracking", interpolate_callback.__name__())
+
+    def test_callbacknaming_callback_compose_returns_CallbackInterpolateCoordinatesSingleObjectTracking_CallbackDenormalizeCoordinates(self):
+        video_name = ""
+        r = {"video_name": video_name}
+        compose_callback = ComposeCallback([
+            CallbackInterpolateCoordinatesSingleObjectTracking(
+                coordinates_columns=self.coordinate_columns,
+                method="linear",
+                max_distance=25),
+            CallbackDenormalizeCoordinates(
+                coordinates_columns=self.coordinate_columns,
+                image_size=(1920, 1080),
+                method="xyxy"),
+            CallbackRenderVideoTracking(output_video_path=os.path.join(self.test_videos_output_path,
+                                                                       video_name + ".mp4"),
+                                        input_video_path=os.path.join(os.path.dirname(__file__),
+                                                                      self.config.get_config["input"]["path"],
+                                                                      "test_sample_1_720p.mp4"),
+                                        coordinate_columns=self.coordinate_columns,
+                                        bbox_color=(0, 0, 255)),
+            CallbackSaveToDisk(file_path=os.path.join(
+                                    self.test_stats_output_path,
+                                    r["video_name"] + "_post_processed.csv"
+                                )
+            )
+        ])
+
+        self.assertEqual("CallbackInterpolateCoordinatesSingleObjectTracking_CallbackDenormalizeCoordinates_CallbackRenderVideoTracking_CallbackSaveToDisk", compose_callback.__name__())

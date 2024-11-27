@@ -1,3 +1,5 @@
+from typing import List
+
 from pandas.errors import IntCastingNaNError
 from ultralytics import YOLO
 from src.dataloaders.video_loader import VideoFramesGenerator
@@ -95,18 +97,16 @@ class BaseTracker:
             try:
                 callback(predictions)
             except IntCastingNaNError as e:
-                self.logger.error(f"Fail executing callback: {callback.__name__()}: {e}")
-                self.logger.error(e, exc_info=True)
+                self.logger.error(f"Fail executing callback: {callback.__name__()}: {e}", exc_info=True)
             except Exception as e:
-                self.logger.error(f"Fail executing callback: {callback.__name__()}: {e}")
-                self.logger.error(e, exc_info=True)
+                self.logger.error(f"Fail executing callback: {callback.__name__()}: {e}", exc_info=True)
 
             self.logger.debug(f"Finish executing callback: {callback.__name__()}")
 
     def transform_data_response(self, response):
         return self.response_transform(response)
 
-    def create_coordinates_dataframe(self, tracker_stats_list):
+    def create_coordinates_dataframe(self, tracker_stats_list: List) -> pd.DataFrame:
         stats_df = None
 
         try:

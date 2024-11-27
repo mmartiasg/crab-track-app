@@ -5,7 +5,7 @@ services:
     tty: false
     volumes:
       - type: bind
-        source: /home/matias/workspace/datasets/ICMAN-30-Octubre-2022
+        source: /home/matias/workspace/datasets/ICMAN-30-Octubre-2022/test_set
         target: /dataset/samples
       - type: bind
         source: /home/matias/workspace/crab-track-app/results
