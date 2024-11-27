@@ -298,4 +298,4 @@ class DataloaderSuitCase(unittest.TestCase):
             )
         ])
 
-        self.assertEqual("CallbackInterpolateCoordinatesSingleObjectTracking_CallbackDenormalizeCoordinates_CallbackRenderVideoTracking_CallbackSaveToDisk", compose_callback.__name__())
+        self.assertEqual("Compose callback: CallbackInterpolateCoordinatesSingleObjectTracking_CallbackDenormalizeCoordinates_CallbackRenderVideoTracking_CallbackSaveToDisk", compose_callback.__name__())
