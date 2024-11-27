@@ -136,6 +136,87 @@ def denormalize_coordinates(video, stats_path, coordinates_columns, width, heigh
 
 
 def main():
+    args = parse_program_arguments()
+
+    config = load_configuration_file(args)
+
+    logger_file_handler, main_logging = set_up_logger(config)
+
+    output_video_path = create_output_folders(config)
+
+    track_videos(args, config)
+
+    render_video_process(args, config, output_video_path)
+
+    interpolate_coordinates_process(args, config)
+
+    de_normalize_coordinates_process(args, config)
+
+    free_resources(logger_file_handler)
+
+
+def free_resources(logger_file_handler):
+    logger_file_handler.close()
+
+
+def de_normalize_coordinates_process(args, config):
+    if args.denormalized_existing_tracks:
+        postfix = ""
+        if args.interpolate_existing_tracks:
+            postfix = "_interpolated"
+        with parallel_backend("loky", verbose=100):
+            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
+                (delayed(denormalize_coordinates)(video + postfix,
+                                                  os.path.join(config.get_config["output"]["path"], "stats"),
+                                                  config.get_config["output"]["coordinates_columns"],
+                                                  config.get_config["output"]["width"],
+                                                  config.get_config["output"]["height"],
+                                                  "xyxy") for video in config.get_config["output"]["render_videos"])
+            )
+        logging.info(
+            f"De-Normalization of coordinates finished for videos: {config.get_config['multiprocess']['simultaneous_video_processes']}")
+
+
+def interpolate_coordinates_process(args, config):
+    if args.interpolate_existing_tracks:
+        with parallel_backend("loky", verbose=100):
+            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
+                (delayed(interpolate_coordinates)(video,
+                                                  os.path.join(config.get_config["output"]["path"], "stats"),
+                                                  config.get_config["output"]["coordinates_columns"],
+                                                  "linear",
+                                                  config.get_config["output"]["interpolate"]["max_distance"]) for video
+                 in config.get_config["output"]["render_videos"])
+            )
+            logging.info(
+                f"Interpolation of coordinates finished for videos: {config.get_config['multiprocess']['simultaneous_video_processes']}")
+
+
+def render_video_process(args, config, output_video_path):
+    if args.render_video_only:
+        with parallel_backend("loky", verbose=100):
+            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
+                (delayed(render_video)(video,
+                                       os.path.join(config.get_config["output"]["path"], "stats"),
+                                       config.get_config["input"]["path"],
+                                       output_video_path,
+                                       config) for video in config.get_config["output"]["render_videos"])
+            )
+        logging.info(
+            f"Video rendering finished for videos: {config.get_config['multiprocess']['simultaneous_video_processes']}")
+
+
+def track_videos(args, config):
+    video_paths = get_input_video_paths(config)
+    if args.track:
+        with parallel_backend("loky", verbose=100):
+            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
+                (delayed(create_job)(video_path, config, logging) for video_path in video_paths)
+            )
+        logging.info("All videos processed.")
+
+
+def parse_program_arguments():
     parser = argparse.ArgumentParser(description="Configurations for the script")
     parser.add_argument("--config_path",
                         help="Specify the config path",
@@ -152,20 +233,28 @@ def main():
     parser.add_argument("--track",
                         help="Option track on the videos in the provided path",
                         action=argparse.BooleanOptionalAction)
-
     args = parser.parse_args()
+    return args
 
-    if args.config_path is not None:
-        config = Config(args.config_path)
-    else:
-        raise (Exception("No config file specified"))
 
-    if config.get_config["input"]["path"] is None:
-        raise Exception("No input path specified")
+def get_input_video_paths(config):
+    video_paths = glob.glob(
+        os.path.join(config.get_config["input"]["path"], f"*.{config.get_config['input']['extension']}"))
+    logging.info(f"List of videos to process: {video_paths}")
+    return video_paths
 
+
+def create_output_folders(config):
+    output_video_path = os.path.join(config.get_config["output"]["path"], "videos")
+    os.makedirs(output_video_path, exist_ok=True)
+    os.makedirs(os.path.join(config.get_config["output"]["path"], "stats"), exist_ok=True)
+    logging.info(f'Stats folder created at {os.path.join(config.get_config["output"]["path"], "stats")}')
+    return output_video_path
+
+
+def set_up_logger(config):
     os.makedirs(os.path.join(config.get_config["output"]["path"], "logs"), exist_ok=True)
 
-    # Set up logger
     main_logging = logging.getLogger(__name__)
     logger_file_handler = logging.FileHandler(
         os.path.join(config.get_config["output"]["path"], "logs", "main.log"),
@@ -183,65 +272,17 @@ def main():
 
     main_logging.info("Log start")
 
-    output_video_path = os.path.join(config.get_config["output"]["path"], "videos")
-    os.makedirs(output_video_path, exist_ok=True)
+    return logger_file_handler, main_logging
 
-    # Create folders to store the video and the stats
-    os.makedirs(os.path.join(config.get_config["output"]["path"], "stats"), exist_ok=True)
-    logging.info(f'Stats folder created at {os.path.join(config.get_config["output"]["path"], "stats")}')
 
-    video_paths = glob.glob(
-        os.path.join(config.get_config["input"]["path"], f"*.{config.get_config['input']['extension']}"))
-    logging.info(f"List of videos to process: {video_paths}")
-
-    if args.render_video_only:
-        with parallel_backend("loky", verbose=100):
-            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
-                (delayed(render_video)(video,
-                                       os.path.join(config.get_config["output"]["path"], "stats"),
-                                       config.get_config["input"]["path"],
-                                       output_video_path,
-                                       config) for video in config.get_config["output"]["render_videos"])
-            )
-
-    if args.interpolate_existing_tracks:
-        with parallel_backend("loky", verbose=100):
-            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
-                (delayed(interpolate_coordinates)(video,
-                                                  os.path.join(config.get_config["output"]["path"], "stats"),
-                                                  config.get_config["output"]["coordinates_columns"],
-                                                  "linear",
-                                                  config.get_config["output"]["interpolate"]["max_distance"]) for video
-                 in config.get_config["output"]["render_videos"])
-            )
-
-    if args.denormalized_existing_tracks:
-        postfix = ""
-        if args.interpolate_existing_tracks:
-            postfix = "_interpolated"
-
-        with parallel_backend("loky", verbose=100):
-            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
-                (delayed(denormalize_coordinates)(video + postfix,
-                                                  os.path.join(config.get_config["output"]["path"], "stats"),
-                                                  config.get_config["output"]["coordinates_columns"],
-                                                  config.get_config["output"]["width"],
-                                                  config.get_config["output"]["height"],
-                                                  "xyxy") for video in config.get_config["output"]["render_videos"])
-            )
-
-    if not (args.render_video_only or
-            args.denormalized_existing_tracks or
-            args.interpolate_existing_tracks) and args.track:
-        # Use joblib to process videos, creating objects on demand
-        with parallel_backend("loky", verbose=100):
-            Parallel(n_jobs=config.get_config["multiprocess"]["simultaneous_video_processes"])(
-                (delayed(create_job)(video_path, config, logging) for video_path in video_paths)
-            )
-        logging.info("All videos processed.")
-
-    logger_file_handler.close()
-    del main_logging
+def load_configuration_file(args):
+    if args.config_path is not None:
+        config = Config(args.config_path)
+    else:
+        raise (Exception("No config file specified"))
+    if config.get_config["input"]["path"] is None:
+        raise Exception("No input path specified")
+    return config
 
 
 if __name__ == "__main__":
