@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Option to use interpolation and de-normalization from the config file
 - Option to run only render video for a given stat or interpolation or de-normalization instead the whole track process
 - Option to run just the track process following the settings in the config file about de-normalization and interpolation.
+- Bugfix confidence threshold and nms threshold was not being used.
+- Optimized version of the video render
 
 ### Changed
 - Add support for multiple object in the render video step.

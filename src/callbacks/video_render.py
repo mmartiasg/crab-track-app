@@ -15,75 +15,73 @@ class CallbackRenderVideoTracking(AbstractCallback):
         self.bbox_color = bbox_color
 
     def __call__(self, coordinates_df: pd.DataFrame) -> pd.DataFrame:
-        # open video capture descriptor
+        # Open video capture descriptor
         cap = cv2.VideoCapture(self.input_video_path)
         if not cap.isOpened():
             raise Exception('[ERROR] video file not loaded')
 
-        # video data
-        self.original_frame_rate = cap.get(cv2.CAP_PROP_FPS)
-        self.width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        # CAP_PROP_FRAME_COUNT does an estimation and in some cases rounds up to one less frame
-        self.frames_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) + 1
+        # Video properties
+        original_frame_rate = cap.get(cv2.CAP_PROP_FPS)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        frames_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) + 1
 
-        # open video writer descriptor
+        # Open video writer descriptor
         out = cv2.VideoWriter(self.output_video_path, cv2.VideoWriter_fourcc(*"mp4v"),
-                              self.original_frame_rate,
-                              (self.width, self.height)
-                              )
+                              original_frame_rate, (width, height))
         if not out.isOpened():
             raise Exception('[ERROR] cannot save the video')
 
+        # Preprocess coordinates DataFrame
+        # This is to treat every frame with their own bbox set for each object in screen.
+        grouped_coordinates = coordinates_df.groupby("frame")[self.coordinate_columns].apply(np.array)
+
+        # Path points storage
+        path_points = np.full((frames_count, 2), -1, dtype=int)
+
+        # Process video frames
         frame_index = 0
-        path_points = np.ones((self.frames_count, 2), dtype=int) * -1
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                break
 
-        ok, frame = cap.read()
+            # Get coordinates for the current frame (if any)
+            # This returns a np array this is due to the .apply(np.array)
+            coordinates = grouped_coordinates.get(frame_index, None)
+            if coordinates is not None:
+                for coordinate in coordinates:
+                    if not np.isnan(coordinate).any():
+                        # Extract coordinates and convert each position to int in one step!.
+                        x1, y1, x2, y2 = map(int, coordinate)
 
-        while ok:
-            # Extract all bboxes for that given frame
-            coordinates = coordinates_df.query(f"frame=={frame_index}")[self.coordinate_columns].values
-            # For each bbox
-            for coordinate in coordinates:
-                # If that bbox is not nan
-                if not np.isnan(coordinate).any():
-                    # Extract the coordinates
-                    (x1, y1, x2, y2) = [int(v) for v in coordinate]
+                        # Draw the bounding box
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), self.bbox_color, 2)
 
-                    # Draw the boundary box
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), self.bbox_color, 2)
+                        # Save path points
+                        path_points[frame_index] = [(x1 + x2) // 2, (y1 + y2) // 2]
 
-                    # save the points to draw the path.
-                    path_points[frame_index, :] = [(x2 + x1) // 2, (y2 + y1) // 2]
+            # Draw the path using precomputed points
+            valid_points = path_points[path_points[:, 0] >= 0]
+            if len(valid_points) > 1:
+                distances = np.linalg.norm(np.diff(valid_points, axis=0), axis=1)
+                for i, dist in enumerate(distances):
+                    if dist <= 100:  # Threshold for drawing paths
+                        cv2.line(frame, tuple(valid_points[i]), tuple(valid_points[i + 1]), self.bbox_color, 5)
 
-                # Draw the path using previous points plus the new one for this frame.
-                # only if the point is not None and the distance between the point and the next is less than 100px
-                # This is to avoid big discontinuity segment to be drawn.
-                for i in range(frame_index):
-                    if ((path_points[i] >= 0).all() and
-                            (path_points[i + 1] >= 0).all() and
-                            euclidean_distance(path_points[i], path_points[i + 1]) <= 100):
-                        cv2.line(frame, tuple(path_points[i]), tuple(path_points[i + 1]), self.bbox_color, 5)
-
-            # write frame to disk
+            # Write the frame to the output video
             out.write(frame)
 
-            # advance frame index
+            # Increment frame index
             frame_index += 1
 
-            # get the next frame
-            ok, frame = cap.read()
-
-        # free resources
+        # Release resources
         cap.release()
         out.release()
 
-        del cap
-        del out
-
-        # to maintain the consistency among callbacks
+        # Maintain consistency among callbacks
         return coordinates_df
 
 
 def euclidean_distance(points_1: NDArray, points_2: NDArray) -> float:
-    return ((points_1[0] - points_2[0]) ** 2 + (points_1[1] - points_2[1]) ** 2) ** 0.5
+    return np.linalg.norm(points_1 - points_2)

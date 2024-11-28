@@ -42,6 +42,7 @@ class BaseTracker:
                  device,
                  model_weights,
                  response_transform,
+                 coordinates_columns,
                  internal_resolution,
                  log_dir,
                  threads_per_video=1):
@@ -52,12 +53,15 @@ class BaseTracker:
         self.nms_threshold = nms_threshold
         self.device = device
         self.threads_per_video = threads_per_video
-        self.model = YOLO(model_weights, task="detect", verbose=False)
+        self.model = YOLO(model_weights,
+                          task="detect",
+                          verbose=False)
         self.response_transform = response_transform
         self.video_name = input_video_path.split("/")[-1].split(".")[0]
         self.internal_resolution = internal_resolution
         self.logger = setup_logging(log_dir=log_dir, video_name=self.video_name)
         self.loader = self.set_up_video_loader()
+        self.coordinates_columns = coordinates_columns
 
     def predict_step(self, batch):
         raise NotImplementedError("Implement in subclass")
@@ -111,7 +115,7 @@ class BaseTracker:
 
         try:
             stats_df = pd.DataFrame(tracker_stats_list)
-            stats_df = stats_df.astype({"x1": float, "y1": float, "x2": float, "y2": float})
+            stats_df = stats_df.astype(dict(zip(self.coordinates_columns, [float, float, float, float])))
         except Exception as e:
             self.logger.critical("Building dataframe", exc_info=True)
 
@@ -127,7 +131,10 @@ class BaseTracker:
 
 class TrackerByDetection(BaseTracker):
     def predict_step(self, batch):
-        return self.transform_data_response(self.model.predict(batch, stream=True))
+        return self.transform_data_response(self.model.predict(batch,
+                                                               stream=True,
+                                                               conf=self.confidence_threshold,
+                                                               iou=self.nms_threshold))
 
     def set_up_video_loader(self):
         video_frame_transform = NDArrayToTensor(self.internal_resolution)
@@ -141,7 +148,11 @@ class TrackerByDetection(BaseTracker):
 
 class TrackerByByteTrack(BaseTracker):
     def predict_step(self, batch):
-        return self.transform_data_response(self.model.track(batch, stream=True, persist=True))
+        return self.transform_data_response(self.model.track(batch,
+                                                             stream=True,
+                                                             persist=True,
+                                                             conf=self.confidence_threshold,
+                                                             iou=self.nms_threshold))
 
     def set_up_video_loader(self):
         video_frame_transform = NDArrayToImage(self.internal_resolution)

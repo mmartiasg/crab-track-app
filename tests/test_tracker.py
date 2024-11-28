@@ -13,6 +13,7 @@ import torch
 import numpy as np
 from src.transforms.Adapter import YoloAdapter, DefaultAdapter
 from unittest.mock import patch, MagicMock, call
+from src.tracking.yolo import flatten_list
 
 
 class TestTracker(unittest.TestCase):
@@ -35,7 +36,7 @@ class TestTracker(unittest.TestCase):
         self.test_logs_output_path = os.path.join(os.path.dirname(__file__), self.config.get_config["output"]["path"],
                                                   "logs")
         self.frame_original_size = (1920, 1080)
-        self.coordinate_columns = ["x1", "y1", "x2", "y2"]
+        self.coordinate_columns = self.config.get_config["output"]["coordinates_columns"]
 
         os.makedirs(self.test_logs_output_path, exist_ok=True)
 
@@ -58,8 +59,11 @@ class TestTracker(unittest.TestCase):
                                           nms_threshold=self.config.get_config["model"]["nms_threshold"],
                                           device=self.config.get_config["model"]["device"],
                                           model_weights=self.config.get_config["model"]["path"],
-                                          response_transform=YoloAdapter(video_name="test", tracker_name="yolov8",
-                                                                         dataset="test"),
+                                          coordinates_columns=self.coordinate_columns,
+                                          response_transform=YoloAdapter(video_name="test",
+                                                                         tracker_name="yolov8",
+                                                                         dataset="test",
+                                                                         column_names=self.config.get_config["output"]["coordinates_columns"]),
                                           log_dir=os.path.join(os.path.dirname(__file__),
                                                                self.config.get_config["output"]["path"]))
 
@@ -75,6 +79,7 @@ class TestTracker(unittest.TestCase):
                                                        nms_threshold=self.config.get_config["model"]["nms_threshold"],
                                                        device=self.config.get_config["model"]["device"],
                                                        model_weights=self.config.get_config["model"]["path"],
+                                                       coordinates_columns=self.coordinate_columns,
                                                        response_transform=DefaultAdapter(video_name="test",
                                                                                          tracker_name="test",
                                                                                          dataset="test"),
@@ -106,22 +111,22 @@ class TestTracker(unittest.TestCase):
         for batch in batches:
             result = self.tracker.predict_step(batch)
 
-        self.assertAlmostEqual(round(result[0][0]["x1"], 4), round(256 / 1080, 4), delta=1e-7)
-        self.assertAlmostEqual(round(result[0][0]["y1"], 4), round(256 / 1920, 4), delta=1e-7)
-        self.assertAlmostEqual(round(result[0][0]["x2"], 4), round(115 / 1080, 4), delta=1e-7)
-        self.assertAlmostEqual(round(result[0][0]["y2"], 4), round(250 / 1920, 4), delta=1e-7)
+        self.assertAlmostEqual(round(result[0][0][self.coordinate_columns[0]], 4), round(256 / 1080, 4), delta=1e-7)
+        self.assertAlmostEqual(round(result[0][0][self.coordinate_columns[1]], 4), round(256 / 1920, 4), delta=1e-7)
+        self.assertAlmostEqual(round(result[0][0][self.coordinate_columns[2]], 4), round(115 / 1080, 4), delta=1e-7)
+        self.assertAlmostEqual(round(result[0][0][self.coordinate_columns[3]], 4), round(250 / 1920, 4), delta=1e-7)
 
     def test_flatten_dictionary_array(self):
         from src.tracking.yolo import flatten_list
 
         # 3 frames 2 with 3 bboxes and last one with one
-        nested_list = [[{"x1": 0.9, "y1": 0.9, "x2": 0.9, "y2": 0.9},
-                        {"x1": 0.9, "y1": 0.9, "x2": 0.9, "y2": 0.9},
-                        {"x1": 0.9, "y1": 0.9, "x2": 0.9, "y2": 0.9}],
-                       [{"x1": 0.9, "y1": 0.9, "x2": 0.9, "y2": 0.9},
-                        {"x1": 0.9, "y1": 0.9, "x2": 0.9, "y2": 0.9},
-                        {"x1": 0.9, "y1": 0.9, "x2": 0.9, "y2": 0.9}],
-                       [{"x1": 0.9, "y1": 0.9, "x2": 0.9, "y2": 0.9}]]
+        nested_list = [[{self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9},
+                        {self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9},
+                        {self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9}],
+                       [{self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9},
+                        {self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9},
+                        {self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9}],
+                       [{self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9}]]
 
         flatten_list = flatten_list(nested_list)
 
@@ -151,37 +156,35 @@ class TestTracker(unittest.TestCase):
         preds_df = self.tracker.track_video(callbacks=None)
 
         self.assertTrue(isinstance(preds_df, pd.DataFrame))
-        self.assertTrue("x1" in preds_df.columns)
-        self.assertTrue("y1" in preds_df.columns)
-        self.assertTrue("x2" in preds_df.columns)
-        self.assertTrue("y2" in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[0] in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[1] in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[2] in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[3] in preds_df.columns)
 
         self.assertTrue(len(preds_df) == 3)
 
-        self.assertTrue(preds_df["x1"].dtype == float)
-        self.assertTrue(preds_df["y1"].dtype == float)
-        self.assertTrue(preds_df["x2"].dtype == float)
-        self.assertTrue(preds_df["y2"].dtype == float)
+        self.assertTrue(preds_df[self.coordinate_columns[0]].dtype == float)
+        self.assertTrue(preds_df[self.coordinate_columns[1]].dtype == float)
+        self.assertTrue(preds_df[self.coordinate_columns[2]].dtype == float)
+        self.assertTrue(preds_df[self.coordinate_columns[3]].dtype == float)
 
-        self.assertAlmostEqual(round(preds_df.iloc[0]["x1"], 4), round(256 / 1080, 4), delta=1e-7)
-        self.assertAlmostEqual(round(preds_df.iloc[0]["y1"], 4), round(256 / 1920, 4), delta=1e-7)
-        self.assertAlmostEqual(round(preds_df.iloc[0]["x2"], 4), round(115 / 1080, 4), delta=1e-7)
-        self.assertAlmostEqual(round(preds_df.iloc[0]["y2"], 4), round(250 / 1920, 4), delta=1e-7)
+        self.assertAlmostEqual(round(preds_df.iloc[0][self.coordinate_columns[0]], 4), round(256 / 1080, 4), delta=1e-7)
+        self.assertAlmostEqual(round(preds_df.iloc[0][self.coordinate_columns[1]], 4), round(256 / 1920, 4), delta=1e-7)
+        self.assertAlmostEqual(round(preds_df.iloc[0][self.coordinate_columns[2]], 4), round(115 / 1080, 4), delta=1e-7)
+        self.assertAlmostEqual(round(preds_df.iloc[0][self.coordinate_columns[3]], 4), round(250 / 1920, 4), delta=1e-7)
 
     @patch("src.tracking.yolo.VideoFramesGenerator")
     def test_call_chain_callbacks_interpolation_and_denormalization_bbox_normalized_returns_256_256_115_249_file_saved_as_test_post_processed_csv(
             self,
             video_frames_generator_mock_class):
 
-        coordinates_columns = ["x1", "y1", "x2", "y2"]
-
         callback_list = [
             CallbackInterpolateCoordinatesSingleObjectTracking(
-                coordinates_columns=coordinates_columns,
+                coordinates_columns=self.coordinate_columns,
                 method="linear",
                 max_distance=25),
             CallbackDenormalizeCoordinates(
-                coordinates_columns=coordinates_columns,
+                coordinates_columns=self.coordinate_columns,
                 image_size=(self.config.get_config["input"]["resolution"]["width"],
                             self.config.get_config["input"]["resolution"]["height"]),
                 method="xyxy"),
@@ -208,22 +211,22 @@ class TestTracker(unittest.TestCase):
         preds_df = self.tracker.track_video(callbacks=callback_list)
 
         self.assertTrue(isinstance(preds_df, pd.DataFrame))
-        self.assertTrue("x1" in preds_df.columns)
-        self.assertTrue("y1" in preds_df.columns)
-        self.assertTrue("x2" in preds_df.columns)
-        self.assertTrue("y2" in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[0] in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[1] in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[2] in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[3] in preds_df.columns)
 
         self.assertTrue(len(preds_df) == 3)
 
-        self.assertTrue(preds_df["x1"].dtype == int)
-        self.assertTrue(preds_df["y1"].dtype == int)
-        self.assertTrue(preds_df["x2"].dtype == int)
-        self.assertTrue(preds_df["y2"].dtype == int)
+        self.assertTrue(preds_df[self.coordinate_columns[0]].dtype == int)
+        self.assertTrue(preds_df[self.coordinate_columns[1]].dtype == int)
+        self.assertTrue(preds_df[self.coordinate_columns[2]].dtype == int)
+        self.assertTrue(preds_df[self.coordinate_columns[3]].dtype == int)
 
-        self.assertEqual(preds_df.iloc[0]["x1"], 256)
-        self.assertEqual(preds_df.iloc[0]["y1"], 256)
-        self.assertEqual(preds_df.iloc[0]["x2"], 115)
-        self.assertEqual(preds_df.iloc[0]["y2"], 249)
+        self.assertEqual(preds_df.iloc[0][self.coordinate_columns[0]], 256)
+        self.assertEqual(preds_df.iloc[0][self.coordinate_columns[1]], 256)
+        self.assertEqual(preds_df.iloc[0][self.coordinate_columns[2]], 115)
+        self.assertEqual(preds_df.iloc[0][self.coordinate_columns[3]], 249)
 
         self.assertTrue(os.path.exists(os.path.join(self.test_stats_output_path,
                                                     "test" + "_post_processed.csv")))
@@ -245,6 +248,7 @@ class TestTracker(unittest.TestCase):
                           nms_threshold=self.config.get_config["model"]["nms_threshold"],
                           device=self.config.get_config["model"]["device"],
                           model_weights="",
+                          coordinates_columns=self.coordinate_columns,
                           response_transform=DefaultAdapter(video_name="test",
                                                             tracker_name="test",
                                                             dataset="test"),
@@ -266,6 +270,7 @@ class TestTracker(unittest.TestCase):
             nms_threshold = self.config.get_config["model"]["nms_threshold"],
             device = self.config.get_config["model"]["device"],
             model_weights = "",
+            coordinates_columns=self.coordinate_columns,
             response_transform = DefaultAdapter(video_name="test",
                                                 tracker_name="test",
                                                 dataset="test"),
@@ -278,12 +283,12 @@ class TestTracker(unittest.TestCase):
 
     def test_post_process_yolo_tracker_fails_with_log_error_entries_for_each_callback(self):
         interpolate_callback = CallbackInterpolateCoordinatesSingleObjectTracking(
-            coordinates_columns=["x2", "x3", "x4", "x5"],
+            coordinates_columns=["x3", "x4", "x5"],
             method="linear",
             max_distance=25)
 
         denormalize_callback = CallbackDenormalizeCoordinates(
-            coordinates_columns=self.coordinate_columns,
+            coordinates_columns=["x3", "x4", "x5"],
             image_size=(1920, 1080),
             method="xyxy")
 
@@ -302,18 +307,18 @@ class TestTracker(unittest.TestCase):
         self.tracker.track_video([interpolate_callback, denormalize_callback])
 
         self.tracker.logger.error.assert_has_calls([
-            call('Fail executing callback: CallbackInterpolateCoordinatesSingleObjectTracking: "[\'x3\', \'x4\', \'x5\'] not in index"', exc_info=True),
-            call('Fail executing callback: CallbackDenormalizeCoordinates: Cannot convert non-finite values (NA or inf) to integer', exc_info=True)
+            call('Fail executing callback: CallbackInterpolateCoordinatesSingleObjectTracking: "None of [Index([\'x3\', \'x4\', \'x5\'], dtype=\'object\')] are in the [columns]"', exc_info=True),
+            call('Fail executing callback: CallbackDenormalizeCoordinates: "None of [Index([\'x3\', \'x4\', \'x5\'], dtype=\'object\')] are in the [columns]"', exc_info=True)
         ])
 
     def test_create_coordinates_fails_with_critical_log(self):
         self.tracker.logger = MagicMock()
 
         dummy_data = {
-            'x1': [1, 1, 1, np.nan, np.nan, np.nan, np.nan, np.nan],
-            'y1': [1, 1, 2, np.nan, np.nan, np.nan, np.nan, np.nan],
-            'x2': [1, 1, 3, np.nan, np.nan, np.nan, np.nan, np.nan],
-            'y2': [1, 1, 4, np.nan, np.nan, np.nan, np.nan, np.nan]
+            self.coordinate_columns[0]: [1, 1, 1, np.nan, np.nan, np.nan, np.nan, np.nan],
+            self.coordinate_columns[1]: [1, 1, 2, np.nan, np.nan, np.nan, np.nan, np.nan],
+            self.coordinate_columns[2]: [1, 1, 3, np.nan, np.nan, np.nan, np.nan, np.nan],
+            self.coordinate_columns[3]: [1, 1, 4, np.nan, np.nan, np.nan, np.nan, np.nan]
         }
 
         self.tracker.create_coordinates_dataframe([dummy_data])
@@ -321,3 +326,35 @@ class TestTracker(unittest.TestCase):
         self.tracker.logger.critical.assert_has_calls([
             call("Building dataframe", exc_info=True),
         ])
+
+    def test_create_coordinates_returns_dataframe_with_4_columns_and_4_rows_from_coordinates_columns_in_conf_test(self):
+        self.tracker.logger = MagicMock()
+
+        # 3 frames 2 with 3 bboxes and last one with one
+        dummy_data = [[{self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9},
+                        {self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9},
+                        {self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9}],
+                       [{self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9},
+                        {self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9},
+                        {self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9}],
+                       [{self.coordinate_columns[0]: 0.9, self.coordinate_columns[1]: 0.9, self.coordinate_columns[2]: 0.9, self.coordinate_columns[3]: 0.9}]]
+
+        preds_df = self.tracker.create_coordinates_dataframe(flatten_list(dummy_data))
+
+        self.assertTrue(isinstance(preds_df, pd.DataFrame))
+        self.assertTrue(self.coordinate_columns[0] in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[1] in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[2] in preds_df.columns)
+        self.assertTrue(self.coordinate_columns[3] in preds_df.columns)
+
+        self.assertTrue(len(preds_df) == 7)
+
+        self.assertTrue(preds_df[self.coordinate_columns[0]].dtype == float)
+        self.assertTrue(preds_df[self.coordinate_columns[1]].dtype == float)
+        self.assertTrue(preds_df[self.coordinate_columns[2]].dtype == float)
+        self.assertTrue(preds_df[self.coordinate_columns[3]].dtype == float)
+
+        self.assertEqual(0.9, preds_df.iloc[0][self.coordinate_columns[0]])
+        self.assertEqual(0.9, preds_df.iloc[0][self.coordinate_columns[1]])
+        self.assertEqual(0.9, preds_df.iloc[0][self.coordinate_columns[2]])
+        self.assertEqual(0.9, preds_df.iloc[0][self.coordinate_columns[3]])

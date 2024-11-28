@@ -82,9 +82,11 @@ def create_job(video_path, config, logging):
                             internal_resolution=(config.get_config["model"]["internal_resolution"]["height"],
                                                  config.get_config["model"]["internal_resolution"]["width"]),
                             model_weights=config.get_config["model"]["path"],
+                            coordinates_columns=config.get_config["output"]["coordinates_columns"],
                             response_transform=YoloAdapter(video_name=video_path.split("/")[-1].split(".")[0],
                                                            tracker_name="yolov8",
-                                                           dataset="test"))
+                                                           dataset="test",
+                                                           column_names=config.get_config["output"]["coordinates_columns"]))
     logging.info(f"Start tracking {video_name}")
     return tracker.track_video(callbacks=callbacks)
 
