@@ -69,29 +69,36 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
     ```
 
 3. **Set Up the configuration file**
-   ```yaml
-      model:
-        path: # Model weight's path.
-        conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
-        nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
-        device: # Device cpu, cuda or mps.
-        algorithm: # detection or byte_track
-        batch_size: # number of frames to process at the same time.
-        internal_resolution: # subsampling resolution for the model to work with
-          width: # subsampling width
-          height: # subsampling height
-      input:
-        path: # Absolute path where the videos are located in the current file system.
-        extension: mp4 # Video extension.
-      resolution: # video resolution
-        width: 1920
-        height: 1080
-      output:
-        path: # Absolute path where the results will be saved in the current file system.
-     multiprocess:
-       simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
-       threads_per_video: 2 # Number of CPUs allocated to process each video
-   ```
+```yaml
+  model:
+    path: # Model weight's path.
+    conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
+    nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
+    device: # Device cpu, cuda or mps.
+    algorithm: # detection or byte_track
+    batch_size: # number of frames to process at the same time.
+    internal_resolution: # subsampling resolution for the model to work with
+      width: # subsampling width
+      height: # subsampling height
+  input:
+    path: # Absolute path where the videos are located in the current file system.
+    extension: mp4 # Video extension.
+  resolution: # video resolution
+    width: 1920
+    height: 1080
+  output:
+   path: # Absolute path where the rendered videos stats and log will be saved.
+   render_videos: # Video list to render eg: ["12", "13"]
+   interpolate: # Interpolate option
+     enabled: # Enable or disable (true/false)
+     max_distance: # Max distance in frames to interpolate.
+   denormalize: # De normalized option
+     enabled: # Enable or disable (true/false)
+  coordinates_columns: # Coordinate columns list eg: ["x1", "y1", "x2", "y2"]
+ multiprocess:
+   simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
+   threads_per_video: 2 # Number of CPUs allocated to process each video
+```
 
 ### Docker
   💡**Hint** Docker ensures the app runs consistently across environments, eliminating 'it works on my machine' issues, and provides a powerful, portable solution for efficient deployment, easy scaling, and optimized resource use.
