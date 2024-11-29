@@ -1,7 +1,7 @@
 services:
   crab-track:
     build: .
-    image: crab-track-image:0.3.1
+    image: crab-track-image:v0.3.1
     container_name: crab-track
     tty: false
     volumes:
