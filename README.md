@@ -258,10 +258,10 @@ Project
 The script will output logs for the whole process and one per video
 
 Those logs are stored in the output folder **results**
-![<img src=".readme_images/logs_folder.png" width="500"/>](.readme_images/logs_folder.png)
+![image](.readme_images/logs_folder.png)
 
 The main log will output information related to the whole process video, process or post process applied after:
-![<img src=".readme_images/main_log.png" width="500"/>](.readme_images/main_log.png)
+![image](.readme_images/main_log.png)
 
 The video logs will output information related to the process frames for that video:
-![<img src=".readme_images/video_log.png" width="500"/>](.readme_images/video_log.png)
+![image](.readme_images/video_log.png)
