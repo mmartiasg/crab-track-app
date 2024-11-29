@@ -1,16 +1,19 @@
 services:
   crab-track:
     build: .
-    image: crab-track-image:0.1.0
+    image: crab-track-image:0.3.1
     container_name: crab-track
     tty: false
     volumes:
       - type: bind
-        source: /home/matias/workspace/datasets/sample_dataset_icman
+        source: /home/matias/workspace/datasets/ICMAN-30-Octubre-2022/test_set/
         target: /dataset/samples
       - type: bind
         source: /home/matias/workspace/crab-track-app/results
         target: /results
     environment:
       YOLO_VERBOSE: false
-    command: ["python", "main.py", "--config_path=config/run_conf.yaml"]
+    command: ["python",
+              "main.py",
+              "--config_path=config/run_conf.yaml",
+              "--track"]

@@ -17,6 +17,13 @@ input:
     width: 1280
 output:
   path: test_results
+  render_videos: ["test_sample_1_720p", "test_sample_2_720p"]
+  interpolate:
+    enabled: true
+    max_distance: 25
+  denormalize:
+    enabled: true
+  coordinates_columns: ["xx1", "yy1", "xx2", "yy2"]
 multiprocess:
-  cpu_videos: 4
-  cpu_per_video: 2
+  cpu_videos: 1
+  cpu_per_video: 1
