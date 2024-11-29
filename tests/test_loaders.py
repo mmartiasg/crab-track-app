@@ -7,7 +7,7 @@ import shutil
 import glob
 import torchvision
 from torch.utils.data import DataLoader
-from src.dataloaders.video_loader import VideoDataloader, VideoDataloaderPytorch, VideoFramesGenerator
+from src.dataloaders.video_loader import VideoDataloader, VideoDataloaderPytorch, VideoFramesGenerator, VideoDataloaderDecord
 from src.transforms.Input import NDArrayToTensor
 import torch
 
@@ -108,6 +108,32 @@ class DataloaderSuitCase(unittest.TestCase):
             torchvision.transforms.ToTensor()
         ])
         loader = VideoDataloaderPytorch(video_path=os.path.join(os.path.dirname(__file__),
+                                                                self.config.get_config["input"]["path"],
+                                                                "test_sample_2_720p.mp4"),
+                                        transform=video_frame_transform)
+
+        data_loader = DataLoader(loader, batch_size=1024, shuffle=False, num_workers=0)
+
+        batches = []
+        frames_count = 0
+        for batch in data_loader:
+            batches.append(batch)
+            frames_count += len(batch)
+
+        self.assertEqual(batches[0].shape, (1024, 3, 128, 128))
+        self.assertEqual(batches[0][0].shape, (3, 128, 128))
+        self.assertEqual(frames_count, loader.__len__())
+        self.assertTrue(np.sum(np.abs(batches[0][0].numpy() - batches[-1][0].numpy())) > 0)
+
+    def test_get_all_frames_from_video_with_decord_and_pytorch_dataloader_video_reader_backend_data_loader_returns_batch_with_1024_samples(
+            self):
+        video_frame_transform = torchvision.transforms.Compose([
+            torchvision.transforms.ToPILImage(),
+            torchvision.transforms.Resize((128, 128)),
+            torchvision.transforms.ToTensor()
+        ])
+
+        loader = VideoDataloaderDecord(video_path=os.path.join(os.path.dirname(__file__),
                                                                 self.config.get_config["input"]["path"],
                                                                 "test_sample_2_720p.mp4"),
                                         transform=video_frame_transform)

@@ -1,4 +1,4 @@
-class BaseAdapter(object):
+class BaseYoloAdapter(object):
     def __init__(self, video_name, tracker_name, dataset):
         self.video_name = video_name
         self.tracker_name = tracker_name
@@ -45,17 +45,22 @@ class BaseAdapter(object):
         return frame_records
 
 
-class YoloAdapter(BaseAdapter):
+class YoloAdapter(BaseYoloAdapter):
+    def __init__(self, video_name, tracker_name, dataset, column_names):
+        super(YoloAdapter, self).__init__(video_name, tracker_name, dataset)
+        self.column_names = column_names
+
     def create_record(self):
         record = {"dataset": self.dataset,
                   "tracker": self.tracker_name,
                   "video": self.video_name,
                   "frame": self.frame_index,
-                  "x1": None,
-                  "y1": None,
-                  "x2": None,
-                  "y2": None
+                  "inference_time[ms]": None,
+                  "confidence": None,
+                  "class_index": None
                   }
+
+        record.update(dict(zip(self.column_names, [None, None, None, None])))
 
         return record
 
@@ -64,21 +69,23 @@ class YoloAdapter(BaseAdapter):
 
         try:
             (x1, y1, x2, y2) = bbox.xyxyn.squeeze().cpu().numpy()
+            conf = bbox.conf.cpu().numpy()[0]
+            class_index = int(bbox.cls.cpu().numpy()[0])
         except AttributeError:
             raise ValueError("Invalid bounding box format. Expected Decord/Numpy-compatible object.")
 
+        record.update(dict(zip(self.column_names, [x1, y1, x2, y2])))
+
         record.update({
-            "x1": x1,
-            "y1": y1,
-            "x2": x2,
-            "y2": y2,
             "inference_time[ms]": results.speed["inference"],
+            "confidence": conf,
+            "class_index": class_index
         })
 
         return record
 
 
-class DefaultAdapter(BaseAdapter):
+class DefaultAdapter(BaseYoloAdapter):
     def create_record(self):
         pass
 

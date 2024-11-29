@@ -1,11 +1,14 @@
 import unittest
+
+import numpy as np
+
 from src.utils.constants import Config
 import pandas as pd
 from src.callbacks.compose import ComposeCallback
-from src.callbacks.post_processing import (CallbackInterpolateCoordinates,
+from src.callbacks.post_processing import (CallbackInterpolateCoordinatesSingleObjectTracking,
                                            CallbackDenormalizeCoordinates,
                                            CallbackSaveToDisk)
-from src.callbacks.video_render import CallbackRenderVideo
+from src.callbacks.video_render import CallbackRenderVideoTracking
 import os
 import shutil
 
@@ -36,8 +39,9 @@ class DataloaderSuitCase(unittest.TestCase):
         sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__),
                                                            "test_data/sample_2_coordinates.csv"))
 
-        interpolated_callback = CallbackInterpolateCoordinates(coordinates_columns=self.coordinate_columns,
-                                                               method="linear")
+        interpolated_callback = CallbackInterpolateCoordinatesSingleObjectTracking(coordinates_columns=self.coordinate_columns,
+                                                                                   method="linear",
+                                                                                   max_distance=25)
 
         interpolated_coordinates_df = interpolated_callback(sample_2_coordinates_df)
 
@@ -70,9 +74,10 @@ class DataloaderSuitCase(unittest.TestCase):
         r = {"video_name": "sample_2", "coordinates": sample_2_coordinates_df}
 
         compose_callback = ComposeCallback([
-            CallbackInterpolateCoordinates(
+            CallbackInterpolateCoordinatesSingleObjectTracking(
                 coordinates_columns=self.coordinate_columns,
-                method="linear"),
+                method="linear",
+                max_distance=25),
             CallbackDenormalizeCoordinates(
                 coordinates_columns=self.coordinate_columns,
                 image_size=(1920, 1080),
@@ -103,18 +108,18 @@ class DataloaderSuitCase(unittest.TestCase):
         sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__),
                                                            "test_data/sample_2_coordinates.csv"))
 
-        render_callback = CallbackRenderVideo(output_video_path=os.path.join(self.test_videos_output_path,
-                                                                             video_name + ".mp4"),
-                                              input_video_path=os.path.join(os.path.dirname(__file__),
+        render_callback = CallbackRenderVideoTracking(output_video_path=os.path.join(self.test_videos_output_path,
+                                                                                     video_name + ".mp4"),
+                                                      input_video_path=os.path.join(os.path.dirname(__file__),
                                                                             self.config.get_config["input"]["path"],
                                                                             "test_sample_2_720p.mp4"),
-                                              coordinate_columns=self.coordinate_columns,
-                                              bbox_color=(0, 0, 255))
-
+                                                      coordinate_columns=self.coordinate_columns,
+                                                      bbox_color=(0, 0, 255))
         compose_callback = ComposeCallback([
-            CallbackInterpolateCoordinates(
+            CallbackInterpolateCoordinatesSingleObjectTracking(
                 coordinates_columns=self.coordinate_columns,
-                method="linear"),
+                method="linear",
+                max_distance=25),
             CallbackDenormalizeCoordinates(
                 coordinates_columns=self.coordinate_columns,
                 image_size=self.video_frame_size,
@@ -133,18 +138,19 @@ class DataloaderSuitCase(unittest.TestCase):
         sample_2_coordinates_df = pd.read_csv(os.path.join(os.path.dirname(__file__),
                                                            "test_data/sample_1_coordinates.csv"))
 
-        render_callback = CallbackRenderVideo(output_video_path=os.path.join(self.test_videos_output_path,
-                                                                             video_name + ".mp4"),
-                                              input_video_path=os.path.join(os.path.dirname(__file__),
+        render_callback = CallbackRenderVideoTracking(output_video_path=os.path.join(self.test_videos_output_path,
+                                                                                     video_name + ".mp4"),
+                                                      input_video_path=os.path.join(os.path.dirname(__file__),
                                                                             self.config.get_config["input"]["path"],
                                                                             "test_sample_1_720p.mp4"),
-                                              coordinate_columns=self.coordinate_columns,
-                                              bbox_color=(0, 0, 255))
+                                                      coordinate_columns=self.coordinate_columns,
+                                                      bbox_color=(0, 0, 255))
 
         compose_callback = ComposeCallback([
-            CallbackInterpolateCoordinates(
+            CallbackInterpolateCoordinatesSingleObjectTracking(
                 coordinates_columns=self.coordinate_columns,
-                method="linear"),
+                method="linear",
+                max_distance=25),
             CallbackDenormalizeCoordinates(
                 coordinates_columns=self.coordinate_columns,
                 image_size=self.video_frame_size,
@@ -157,3 +163,139 @@ class DataloaderSuitCase(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.test_videos_output_path,
                                                     video_name + ".mp4"))
         )
+
+    def test_interpolate_with_max_distance_2_more_a_dataframe_with_4_nan_rows_returns_3_4_5_6_rows_nan(self):
+        interpolate_callback = CallbackInterpolateCoordinatesSingleObjectTracking(
+            coordinates_columns=self.coordinate_columns,
+            method="linear",
+            max_distance=2)
+
+        dummy_data = {
+            'x1': [1, 1, 1, np.nan, np.nan, np.nan, np.nan, 1],
+            'y1': [1, 1, 2, np.nan, np.nan, np.nan, np.nan, 1],
+            'x2': [1, 1, 3, np.nan, np.nan, np.nan, np.nan, 1],
+            'y2': [1, 1, 4, np.nan, np.nan, np.nan, np.nan, 1]
+        }
+        dummy_coordinates_df = pd.DataFrame(dummy_data)
+
+        dummy_coordinates_interpolated_df = interpolate_callback(dummy_coordinates_df)
+
+        self.assertTrue((dummy_coordinates_interpolated_df.index[dummy_coordinates_interpolated_df.isna().all(axis=1)]
+                         == [3, 4, 5, 6]).all())
+
+    def test_interpolate_with_max_distance_4_more_a_dataframe_with_4_nan_rows_returns_no_rows_nan(self):
+        interpolate_callback = CallbackInterpolateCoordinatesSingleObjectTracking(
+            coordinates_columns=self.coordinate_columns,
+            method="linear",
+            max_distance=5)
+
+        dummy_data = {
+            'x1': [1, 1, 1, np.nan, np.nan, np.nan, np.nan, 1],
+            'y1': [1, 1, 2, np.nan, np.nan, np.nan, np.nan, 1],
+            'x2': [1, 1, 3, np.nan, np.nan, np.nan, np.nan, 1],
+            'y2': [1, 1, 4, np.nan, np.nan, np.nan, np.nan, 1]
+        }
+        dummy_coordinates_df = pd.DataFrame(dummy_data)
+
+        dummy_coordinates_interpolated_df = interpolate_callback(dummy_coordinates_df)
+
+        self.assertTrue((dummy_coordinates_interpolated_df.index[dummy_coordinates_interpolated_df.isna().all(axis=1)]
+                         == []).all())
+
+    def test_interpolate_with_max_distance_4_more_a_dataframe_with_4_nan_rows_in_blocks_and_first_row_nan_returns_no_rows_nan_first_row_equals_1_1_1_1(self):
+        interpolate_callback = CallbackInterpolateCoordinatesSingleObjectTracking(
+            coordinates_columns=self.coordinate_columns,
+            method="linear",
+            max_distance=5)
+
+        dummy_data = {
+            'x1': [np.nan, 1, 1, np.nan, np.nan, np.nan, np.nan, 1],
+            'y1': [np.nan, 1, 2, np.nan, np.nan, np.nan, np.nan, 1],
+            'x2': [np.nan, 1, 3, np.nan, np.nan, np.nan, np.nan, 1],
+            'y2': [np.nan, 1, 4, np.nan, np.nan, np.nan, np.nan, 1]
+        }
+        dummy_coordinates_df = pd.DataFrame(dummy_data)
+
+        dummy_coordinates_interpolated_df = interpolate_callback(dummy_coordinates_df)
+
+        self.assertTrue((dummy_coordinates_interpolated_df.index[dummy_coordinates_interpolated_df.isna().all(axis=1)]
+                         == []).all())
+
+        self.assertTrue((dummy_coordinates_interpolated_df.iloc[0] == [1, 1, 1, 1]).all())
+
+    def test_interpolate_with_max_distance_4_more_a_dataframe_with_4_nan_rows_in_blocks_and_first_row_nan_returns_no_rows_nan_last_row_equals_1_1_1_1(self):
+        interpolate_callback = CallbackInterpolateCoordinatesSingleObjectTracking(
+            coordinates_columns=self.coordinate_columns,
+            method="linear",
+            max_distance=5)
+
+        dummy_data = {
+            'x1': [1, 1, 1, np.nan, np.nan, np.nan, np.nan, 1, np.nan],
+            'y1': [1, 1, 2, np.nan, np.nan, np.nan, np.nan, 1, np.nan],
+            'x2': [1, 1, 3, np.nan, np.nan, np.nan, np.nan, 1, np.nan],
+            'y2': [1, 1, 4, np.nan, np.nan, np.nan, np.nan, 1, np.nan]
+        }
+        dummy_coordinates_df = pd.DataFrame(dummy_data)
+
+        dummy_coordinates_interpolated_df = interpolate_callback(dummy_coordinates_df)
+
+        self.assertTrue((dummy_coordinates_interpolated_df.index[dummy_coordinates_interpolated_df.isna().all(axis=1)]
+                         == []).all())
+
+        self.assertTrue((dummy_coordinates_interpolated_df.iloc[-1] == [1, 1, 1, 1]).all())
+
+    def test_interpolate_with_max_distance_4_more_a_dataframe_with_5_nan_rows_in_blocks_last_row_equals_1_2_3_4_last_non_nan_is_propagated_bfill(self):
+        interpolate_callback = CallbackInterpolateCoordinatesSingleObjectTracking(
+            coordinates_columns=self.coordinate_columns,
+            method="linear",
+            max_distance=5)
+
+        dummy_data = {
+            'x1': [1, 1, 1, np.nan, np.nan, np.nan, np.nan, np.nan],
+            'y1': [1, 1, 2, np.nan, np.nan, np.nan, np.nan, np.nan],
+            'x2': [1, 1, 3, np.nan, np.nan, np.nan, np.nan, np.nan],
+            'y2': [1, 1, 4, np.nan, np.nan, np.nan, np.nan, np.nan]
+        }
+        dummy_coordinates_df = pd.DataFrame(dummy_data)
+
+        dummy_coordinates_interpolated_df = interpolate_callback(dummy_coordinates_df)
+
+        self.assertTrue((dummy_coordinates_interpolated_df.index[dummy_coordinates_interpolated_df.isna().all(axis=1)]
+                         == []).all())
+
+        self.assertTrue((dummy_coordinates_interpolated_df.iloc[-1] == [1, 2, 3, 4]).all())
+
+    def test_callbacknaming_returns_CallbackInterpolateCoordinatesSingleObjectTracking(self):
+        interpolate_callback = CallbackInterpolateCoordinatesSingleObjectTracking(
+            coordinates_columns=self.coordinate_columns,
+            method="linear",
+            max_distance=5)
+        self.assertEqual("CallbackInterpolateCoordinatesSingleObjectTracking", interpolate_callback.__name__())
+
+    def test_callbacknaming_callback_compose_returns_CallbackInterpolateCoordinatesSingleObjectTracking_CallbackDenormalizeCoordinates(self):
+        video_name = ""
+        r = {"video_name": video_name}
+        compose_callback = ComposeCallback([
+            CallbackInterpolateCoordinatesSingleObjectTracking(
+                coordinates_columns=self.coordinate_columns,
+                method="linear",
+                max_distance=25),
+            CallbackDenormalizeCoordinates(
+                coordinates_columns=self.coordinate_columns,
+                image_size=(1920, 1080),
+                method="xyxy"),
+            CallbackRenderVideoTracking(output_video_path=os.path.join(self.test_videos_output_path,
+                                                                       video_name + ".mp4"),
+                                        input_video_path=os.path.join(os.path.dirname(__file__),
+                                                                      self.config.get_config["input"]["path"],
+                                                                      "test_sample_1_720p.mp4"),
+                                        coordinate_columns=self.coordinate_columns,
+                                        bbox_color=(0, 0, 255)),
+            CallbackSaveToDisk(file_path=os.path.join(
+                                    self.test_stats_output_path,
+                                    r["video_name"] + "_post_processed.csv"
+                                )
+            )
+        ])
+
+        self.assertEqual("Compose callback: CallbackInterpolateCoordinatesSingleObjectTracking_CallbackDenormalizeCoordinates_CallbackRenderVideoTracking_CallbackSaveToDisk", compose_callback.__name__())
