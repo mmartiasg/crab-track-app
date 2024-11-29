@@ -23,6 +23,7 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
   - [Local Docker](#local-docker)
   - [Docker Hub Image](#docker-hub-image)
   - [Console output](#console-output)
+  - [Commands](#comands)
 - [Output](#output)
   - [Files](#files)
   - [Csv data](#csv-data)
@@ -75,29 +76,29 @@ This Python application uses YOLO (You Only Look Once) from the `ultralytics` li
     conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
     nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
     device: # Device cpu, cuda or mps.
-    algorithm: # detection or byte_track
+    algorithm: # detection or byte_track.
     batch_size: # number of frames to process at the same time.
-    internal_resolution: # subsampling resolution for the model to work with
-      width: # subsampling width
-      height: # subsampling height
+    internal_resolution: # subsampling resolution for the model to work with.
+      width: # subsampling width.
+      height: # subsampling height.
   input:
     path: # Absolute path where the videos are located in the current file system.
     extension: mp4 # Video extension.
-  resolution: # video resolution
+  resolution: # video resolution.
     width: 1920
     height: 1080
   output:
    path: # Absolute path where the rendered videos stats and log will be saved.
-   render_videos: # Video list to render eg: ["12", "13"]
-   interpolate: # Interpolate option
-     enabled: # Enable or disable (true/false)
+   render_videos: # Video list to render eg: ["12", "13"].
+   interpolate: # Interpolate option.
+     enabled: # Enable or disable (true/false).
      max_distance: # Max distance in frames to interpolate.
-   denormalize: # De normalized option
-     enabled: # Enable or disable (true/false)
-  coordinates_columns: # Coordinate columns list eg: ["x1", "y1", "x2", "y2"]
+   denormalize: # De normalized option.
+     enabled: # Enable or disable (true/false).
+  coordinates_columns: # Coordinate columns list eg: ["x1", "y1", "x2", "y2"].
  multiprocess:
-   simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
-   threads_per_video: 2 # Number of CPUs allocated to process each video
+   simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time).
+   threads_per_video: 2 # Number of CPUs allocated to process each video.
 ```
 
 ### Docker
@@ -117,54 +118,62 @@ Copy the template provided for docker and change the name to **run_conf.yaml**
   ```
 
 3. **Configuration**
-   ```yaml
-      model:
-        path: # Model weight's path.
-        conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
-        nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
-        device: # Device cpu, cuda or mps.
-        algorithm: # detection or byte_track
-        batch_size: # number of frames to process at the same time.
-        internal_resolution: # subsampling resolution for the model to work with
-          width: # subsampling width
-          height: # subsampling height
-      input:
-        path: /dataset/samples # !Do not change this! This is the docker path where the input will be mapped (target)!
-        extension: mp4 # Video extension.
-      resolution: # video resolution
-        width: 1920
-        height: 1080
-      output:
-        path: # Absolute path where the results will be saved in the current file system.
-     multiprocess:
-       simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time)
-       threads_per_video: 2 # Number of CPUs allocated to process each video
-   ```
+```yaml
+  model:
+    path: # Model weight's path.
+    conf_threshold: # Desired confidence threshold from 0.0 up to 1.0.
+    nms_threshold: # Desired iou overlap threshold from 0.0 up to 1.0.
+    device: # Device cpu, cuda or mps.
+    algorithm: # detection or byte_track.
+    batch_size: # number of frames to process at the same time.
+    internal_resolution: # subsampling resolution for the model to work with.
+      width: # subsampling width.
+      height: # subsampling height.
+  input:
+    path: /dataset/samples # !Do not change this! This is the docker path where the input will be mapped (target)!
+    extension: mp4 # Video extension.
+  resolution: # video resolution.
+    width: 1920
+    height: 1080
+  output:
+   path: # Absolute path where the rendered videos stats and log will be saved.
+   render_videos: # Video list to render eg: ["12", "13"].
+   interpolate: # Interpolate option.
+     enabled: # Enable or disable (true/false).
+     max_distance: # Max distance in frames to interpolate.
+   denormalize: # De normalized option.
+     enabled: # Enable or disable (true/false).
+  coordinates_columns: # Coordinate columns list eg: ["x1", "y1", "x2", "y2"].
+ multiprocess:
+   simultaneous_video_processes: 4 # Number of videos to process concurrently (at the same time).
+   threads_per_video: 2 # Number of CPUs allocated to process each video.
+```
 
-   💡**Hint:** We've provided a sample template for each case in the **config** folder to help you get started. A base model is also available in the models folder: the **ONNX** version is already optimized for fast **CPU inference**, while the .pt file is the unoptimized raw model from PyTorch.
-    ```
-    Project
-    |-- README.md
-    |-- config
-       |-- run_conf_sample_docker.yaml
-       |-- run_conf_sample_local.yaml
-    |-- models
-        |--0.2.0
-            |-- tracking.onnx
-            |-- tracking.pt
-    ```
+💡**Hint:** We've provided a sample template for each case in the **config** folder to help you get started. A base model is also available in the models folder: the **ONNX** version is already optimized for fast **CPU inference**, while the .pt file is the unoptimized raw model from PyTorch.
+```
+Project
+|-- README.md
+|-- config
+   |-- run_conf_sample_docker.yaml
+   |-- run_conf_sample_local.yaml
+|-- models
+    |--0.2.0
+        |-- tracking.onnx
+        |-- tracking.pt
+```
 
 4. **Docker compose configuration**
 The important part is the **volumes** section
-   ```yaml
-    volumes:
-      - type: bind # Do not change!
-        source: # Change to the folder in the local file system where the videos are located.
-        target: /dataset/samples # Do not change!
-      - type: bind # Do not change!
-        source: # Change to an existing folder where you want the results to be saved.
-        target: /results # Do not change!
-   ```
+```yaml
+volumes:
+  - type: bind # Do not change!
+    source: # Change to the folder in the local file system where the videos are located.
+    target: /dataset/samples # Do not change!
+  - type: bind # Do not change!
+    source: # Change to an existing folder where you want the results to be saved.
+    target: /results # Do not change!
+command: ["python", "main.py", "--config_path=/config/run_conf.yaml --track"]
+```
 
 ## Usage
 ### Local
@@ -208,7 +217,7 @@ To make usage easier, we have also provided a Docker Compose YAML file.
             target: /config
         environment:
           YOLO_VERBOSE: false
-        command: ["python", "main.py", "--config_path=/config/run_conf.yaml"]
+        command: ["python", "main.py", "--config_path=/config/run_conf.yaml --track"]
 ```
 💡**Note:** The key difference is that we cannot copy the configuration file directly, as we don’t know which specific configuration you’d like to use. Since Docker relies on absolute paths, you'll need to map the configuration directory to a specific path, such as /config.
 
@@ -265,3 +274,11 @@ The main log will output information related to the whole process video, process
 
 The video logs will output information related to the process frames for that video:
 ![image](.readme_images/video_log.png)
+
+## Commands
+There are several commands available to use:
+
+- --track : This will run the tracking process using the options in the config file, for interpolate, run a de-normalized or render a sample video.
+- --render_video_only: This option will run just the video render of the videos listed in **render_video** of the config file.
+- --interpolate_existing_tracks: Interpolate existing tracks for csv files in the current output stats folder.
+- --denormalized_existing_tracks: Denormalized existing [interpolated] tracks only to output resolution in config

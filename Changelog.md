@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Select which videos to render from the config file in the option **render_videos**.
 - Callback logs before and after to keep track of the execution of each one.
 - Added class token and confidence for each frame detection in the output stats csv.
+- Added command section explanation in README.
 
 ### Changed
 - Add support for multiple object in the render video step.
