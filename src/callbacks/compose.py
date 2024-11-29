@@ -16,3 +16,6 @@ class ComposeCallback:
             results = callback(results)
 
         return results
+
+    def __name__(self):
+        return "Compose callback: "+"_".join([c.__name__() for c in self.callbacks])

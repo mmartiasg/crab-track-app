@@ -1,7 +1,8 @@
+from typing import List
+
+from pandas.errors import IntCastingNaNError
 from ultralytics import YOLO
 from src.dataloaders.video_loader import VideoFramesGenerator
-import torchvision
-import multiprocessing as mpt
 import logging
 import os
 import itertools
@@ -41,6 +42,7 @@ class BaseTracker:
                  device,
                  model_weights,
                  response_transform,
+                 coordinates_columns,
                  internal_resolution,
                  log_dir,
                  threads_per_video=1):
@@ -51,12 +53,15 @@ class BaseTracker:
         self.nms_threshold = nms_threshold
         self.device = device
         self.threads_per_video = threads_per_video
-        self.model = YOLO(model_weights, task="detect", verbose=False)
+        self.model = YOLO(model_weights,
+                          task="detect",
+                          verbose=False)
         self.response_transform = response_transform
         self.video_name = input_video_path.split("/")[-1].split(".")[0]
         self.internal_resolution = internal_resolution
         self.logger = setup_logging(log_dir=log_dir, video_name=self.video_name)
         self.loader = self.set_up_video_loader()
+        self.coordinates_columns = coordinates_columns
 
     def predict_step(self, batch):
         raise NotImplementedError("Implement in subclass")
@@ -92,18 +97,25 @@ class BaseTracker:
 
     def post_process(self, predictions, callbacks):
         for callback in callbacks:
-            callback(predictions)
-            self.logger.debug(f"Called callback: {callback.__class__.__name__}")
+            self.logger.debug(f"Start executing callback: {callback.__name__()}")
+            try:
+                callback(predictions)
+            except IntCastingNaNError as e:
+                self.logger.error(f"Fail executing callback: {callback.__name__()}: {e}", exc_info=True)
+            except Exception as e:
+                self.logger.error(f"Fail executing callback: {callback.__name__()}: {e}", exc_info=True)
+
+            self.logger.debug(f"Finish executing callback: {callback.__name__()}")
 
     def transform_data_response(self, response):
         return self.response_transform(response)
 
-    def create_coordinates_dataframe(self, tracker_stats_list):
+    def create_coordinates_dataframe(self, tracker_stats_list: List) -> pd.DataFrame:
         stats_df = None
 
         try:
             stats_df = pd.DataFrame(tracker_stats_list)
-            stats_df = stats_df.astype({"x1": float, "y1": float, "x2": float, "y2": float})
+            stats_df = stats_df.astype(dict(zip(self.coordinates_columns, [float, float, float, float])))
         except Exception as e:
             self.logger.critical("Building dataframe", exc_info=True)
 
@@ -119,7 +131,10 @@ class BaseTracker:
 
 class TrackerByDetection(BaseTracker):
     def predict_step(self, batch):
-        return self.transform_data_response(self.model.predict(batch, stream=True))
+        return self.transform_data_response(self.model.predict(batch,
+                                                               stream=True,
+                                                               conf=self.confidence_threshold,
+                                                               iou=self.nms_threshold))
 
     def set_up_video_loader(self):
         video_frame_transform = NDArrayToTensor(self.internal_resolution)
@@ -133,7 +148,11 @@ class TrackerByDetection(BaseTracker):
 
 class TrackerByByteTrack(BaseTracker):
     def predict_step(self, batch):
-        return self.transform_data_response(self.model.track(batch, stream=True, persist=True))
+        return self.transform_data_response(self.model.track(batch,
+                                                             stream=True,
+                                                             persist=True,
+                                                             conf=self.confidence_threshold,
+                                                             iou=self.nms_threshold))
 
     def set_up_video_loader(self):
         video_frame_transform = NDArrayToImage(self.internal_resolution)
